@@ -8,14 +8,8 @@ import type { TopGamer } from '@/lib/types';
 import { getPlayerRank } from '@/lib/ranks';
 import { PlayerAvatar } from '@/lib/avatars';
 
-const DEFAULT_GAMERS: TopGamer[] = [
-  { rank: 1, id: 'd1', full_name: 'Rahul Sharma', masked_phone: '••••8821', total_spent: 4200, free_hours_unlocked: 4, avatar_id: 'cyber_skull' },
-  { rank: 2, id: 'd2', full_name: 'Aman Verma', masked_phone: '••••3190', total_spent: 2800, free_hours_unlocked: 2, avatar_id: 'ps_controller' },
-  { rank: 3, id: 'd3', full_name: 'Sahil Kapoor', masked_phone: '••••7742', total_spent: 2100, free_hours_unlocked: 2, avatar_id: 'pool_8ball' },
-];
-
 export default function Leaderboard() {
-  const [gamers, setGamers] = useState<TopGamer[]>(DEFAULT_GAMERS);
+  const [gamers, setGamers] = useState<TopGamer[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -25,15 +19,15 @@ export default function Leaderboard() {
     try {
       // 1. Try atomic SECURITY DEFINER RPC
       const { data, error } = await supabase.rpc('get_top_gamers');
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setGamers(data);
         return;
       }
 
-      // 2. Direct fallback query if RPC not yet run in Supabase SQL editor
+      // 2. Direct query fallback from profiles table
       const { data: profiles, error: pError } = await supabase
         .from('profiles')
-        .select('id, full_name, phone, total_spent')
+        .select('id, full_name, phone, total_spent, avatar_id')
         .eq('role', 'CUSTOMER')
         .order('total_spent', { ascending: false })
         .limit(5);
@@ -47,11 +41,15 @@ export default function Leaderboard() {
             p.phone && p.phone.length >= 4 ? `••••${p.phone.slice(-4)}` : '••••',
           total_spent: p.total_spent || 0,
           free_hours_unlocked: Math.floor((p.total_spent || 0) / 1000),
+          avatar_id: p.avatar_id || 'ps_controller',
         }));
         setGamers(mapped);
+      } else {
+        setGamers([]);
       }
     } catch (err) {
       console.warn('Leaderboard fetch warning:', err);
+      setGamers([]);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -148,7 +146,7 @@ export default function Leaderboard() {
         ) : gamers.length === 0 ? (
           <div className="p-8 text-center text-xs text-gray-400">
             <Trophy size={28} className="text-gold/50 mx-auto mb-2" />
-            <p className="font-semibold text-gray-300">No ranked gamers yet</p>
+            <p className="font-semibold text-gray-300">No ranked players yet — play a session to claim #1!</p>
             <p className="text-[11px] text-gray-500 mt-1">
               Play pool or PS5 and unlock free hours to climb the Hall of Fame!
             </p>

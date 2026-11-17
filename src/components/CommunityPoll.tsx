@@ -22,23 +22,8 @@ interface CommunityPollProps {
   onAuthClick?: () => void;
 }
 
-const DEFAULT_OPTIONS = [
-  'EA Sports FC 26',
-  'Tekken 8',
-  'GTA V (Next-Gen)',
-  'Mortal Kombat 1',
-];
-
-const STARTER_POLL: Poll = {
-  id: 'starter-poll',
-  question: 'Which game should we install next on the PS5 lounge?',
-  options: DEFAULT_OPTIONS,
-  is_active: true,
-  created_at: new Date().toISOString(),
-};
-
 export default function CommunityPoll({ profile, onAuthClick }: CommunityPollProps) {
-  const [poll, setPoll] = useState<Poll | null>(STARTER_POLL);
+  const [poll, setPoll] = useState<Poll | null>(null);
   const [votes, setVotes] = useState<PollVote[]>([]);
   const [loading, setLoading] = useState(false);
   const [submittingVote, setSubmittingVote] = useState(false);
@@ -75,21 +60,10 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
         currentPoll = latestPolls?.[0] || null;
       }
 
-      if (!currentPoll) {
-        // Fallback default poll for display if DB table is unseeded
-        currentPoll = {
-          id: 'starter-poll',
-          question: 'Which game should we install next on the PS5 lounge?',
-          options: DEFAULT_OPTIONS,
-          is_active: true,
-          created_at: new Date().toISOString(),
-        };
-      }
-
       setPoll(currentPoll);
 
       // 2. Fetch votes for this poll
-      if (currentPoll.id !== 'starter-poll') {
+      if (currentPoll) {
         const { data: voteData } = await supabase
           .from('poll_votes')
           .select('*')
@@ -101,6 +75,8 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
       }
     } catch (err) {
       console.warn('Poll fetch warning:', err);
+      setPoll(null);
+      setVotes([]);
     } finally {
       setLoading(false);
     }
@@ -148,21 +124,6 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
     setSubmittingVote(true);
 
     try {
-      if (poll.id === 'starter-poll') {
-        // Optimistic local fallback vote
-        setVotes([
-          ...votes.filter((v) => v.user_id !== profile.id),
-          {
-            id: `temp-${Date.now()}`,
-            poll_id: poll.id,
-            user_id: profile.id,
-            option_index: optionIndex,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-        return;
-      }
-
       const { error: voteErr } = await supabase.from('poll_votes').upsert(
         {
           poll_id: poll.id,
@@ -401,113 +362,125 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
         {/* Ambient subtle glow */}
         <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-neon-green/5 blur-3xl pointer-events-none" />
 
-        <div>
-          {/* Poll Question */}
-          <div className="flex items-start justify-between gap-3 mb-4">
-            <h4 className="text-sm sm:text-base font-extrabold text-white leading-snug">
-              {poll?.question || 'Which game should we install next on PS5?'}
-            </h4>
-            {isAdmin && poll?.is_active && (
-              <button
-                onClick={handleClosePoll}
-                className="text-[10px] font-bold text-gray-400 hover:text-crimson px-2 py-0.5 rounded border border-white/10 hover:border-crimson/40 transition-colors flex-shrink-0"
-              >
-                Close Poll
-              </button>
-            )}
+        {!poll ? (
+          <div className="h-44 flex flex-col items-center justify-center text-center text-gray-500 text-xs px-4 my-auto">
+            <Vote size={28} className="text-gray-600 mb-2 opacity-60" />
+            <p className="font-semibold text-gray-300">No active poll right now</p>
+            <p className="text-[11px] text-gray-500 mt-0.5">
+              Check back soon or ask the lounge admin to launch a community poll!
+            </p>
           </div>
+        ) : (
+          <>
+            <div>
+              {/* Poll Question */}
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <h4 className="text-sm sm:text-base font-extrabold text-white leading-snug">
+                  {poll.question}
+                </h4>
+                {isAdmin && poll.is_active && (
+                  <button
+                    onClick={handleClosePoll}
+                    className="text-[10px] font-bold text-gray-400 hover:text-crimson px-2 py-0.5 rounded border border-white/10 hover:border-crimson/40 transition-colors flex-shrink-0"
+                  >
+                    Close Poll
+                  </button>
+                )}
+              </div>
 
-          {/* Options List with Percentage Bars */}
-          <div className="space-y-2.5">
-            {poll?.options.map((option, idx) => {
-              const optionVotes = votes.filter((v) => v.option_index === idx).length;
-              const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
-              const isSelected = userVoteIndex === idx;
+              {/* Options List with Percentage Bars */}
+              <div className="space-y-2.5">
+                {poll.options.map((option, idx) => {
+                  const optionVotes = votes.filter((v) => v.option_index === idx).length;
+                  const percentage = totalVotes > 0 ? Math.round((optionVotes / totalVotes) * 100) : 0;
+                  const isSelected = userVoteIndex === idx;
 
-              return (
-                <button
-                  key={idx}
-                  onClick={() => handleCastVote(idx)}
-                  disabled={!poll.is_active || submittingVote}
-                  className={[
-                    'relative w-full overflow-hidden rounded-xl p-3 border text-left transition-all duration-300 group',
-                    isSelected
-                      ? 'border-neon-green/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-neon-green/[0.04]'
-                      : 'border-white/10 hover:border-white/20 bg-black/40',
-                    poll.is_active ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default',
-                  ].join(' ')}
-                >
-                  {/* Shimmering Animated Percentage Fill */}
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: `${percentage}%` }}
-                    transition={{ duration: 0.6, ease: 'easeOut' }}
-                    className={[
-                      'absolute inset-0 h-full pointer-events-none opacity-20',
-                      isSelected ? 'bg-neon-green' : 'bg-gray-500',
-                    ].join(' ')}
-                  />
-
-                  {/* Foreground Option Content */}
-                  <div className="relative z-10 flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleCastVote(idx)}
+                      disabled={!poll.is_active || submittingVote}
+                      className={[
+                        'relative w-full overflow-hidden rounded-xl p-3 border text-left transition-all duration-300 group',
+                        isSelected
+                          ? 'border-neon-green/60 shadow-[0_0_15px_rgba(16,185,129,0.15)] bg-neon-green/[0.04]'
+                          : 'border-white/10 hover:border-white/20 bg-black/40',
+                        poll.is_active ? 'cursor-pointer active:scale-[0.99]' : 'cursor-default',
+                      ].join(' ')}
+                    >
+                      {/* Shimmering Animated Percentage Fill */}
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 0.6, ease: 'easeOut' }}
                         className={[
-                          'w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors',
-                          isSelected
-                            ? 'border-neon-green bg-neon-green text-black'
-                            : 'border-white/30 group-hover:border-white/60',
+                          'absolute inset-0 h-full pointer-events-none opacity-20',
+                          isSelected ? 'bg-neon-green' : 'bg-gray-500',
                         ].join(' ')}
-                      >
-                        {isSelected && <CheckCircle2 size={12} strokeWidth={3} />}
+                      />
+
+                      {/* Foreground Option Content */}
+                      <div className="relative z-10 flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className={[
+                              'w-4 h-4 rounded-full border flex items-center justify-center flex-shrink-0 transition-colors',
+                              isSelected
+                                ? 'border-neon-green bg-neon-green text-black'
+                                : 'border-white/30 group-hover:border-white/60',
+                            ].join(' ')}
+                          >
+                            {isSelected && <CheckCircle2 size={12} strokeWidth={3} />}
+                          </div>
+                          <span className="text-xs sm:text-sm font-semibold text-white truncate">
+                            {option}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2 flex-shrink-0 text-right">
+                          <span className="text-[10px] text-gray-400 font-mono">
+                            {optionVotes} {optionVotes === 1 ? 'vote' : 'votes'}
+                          </span>
+                          <span
+                            className={[
+                              'text-xs font-black font-mono w-9 text-right',
+                              isSelected ? 'text-neon-green' : 'text-gray-300',
+                            ].join(' ')}
+                          >
+                            {percentage}%
+                          </span>
+                        </div>
                       </div>
-                      <span className="text-xs sm:text-sm font-semibold text-white truncate">
-                        {option}
-                      </span>
-                    </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                    <div className="flex items-center gap-2 flex-shrink-0 text-right">
-                      <span className="text-[10px] text-gray-400 font-mono">
-                        {optionVotes} {optionVotes === 1 ? 'vote' : 'votes'}
-                      </span>
-                      <span
-                        className={[
-                          'text-xs font-black font-mono w-9 text-right',
-                          isSelected ? 'text-neon-green' : 'text-gray-300',
-                        ].join(' ')}
-                      >
-                        {percentage}%
-                      </span>
-                    </div>
-                  </div>
+            {/* Footer / User Prompt */}
+            <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-500">
+              <div className="flex items-center gap-2">
+                <BarChart3 size={12} className="text-neon-green" />
+                <span>{totalVotes} {totalVotes === 1 ? 'total vote' : 'total votes cast'}</span>
+              </div>
+
+              {!profile ? (
+                <button
+                  onClick={onAuthClick}
+                  className="text-gold hover:underline font-semibold flex items-center gap-1"
+                >
+                  Sign in to vote
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Footer / User Prompt */}
-        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] text-gray-500">
-          <div className="flex items-center gap-2">
-            <BarChart3 size={12} className="text-neon-green" />
-            <span>{totalVotes} {totalVotes === 1 ? 'total vote' : 'total votes cast'}</span>
-          </div>
-
-          {!profile ? (
-            <button
-              onClick={onAuthClick}
-              className="text-gold hover:underline font-semibold flex items-center gap-1"
-            >
-              Sign in to vote
-            </button>
-          ) : userVoteIndex !== null ? (
-            <span className="text-neon-green flex items-center gap-1">
-              <CheckCircle2 size={11} /> Vote registered
-            </span>
-          ) : (
-            <span className="text-gray-400">Click any option to vote</span>
-          )}
-        </div>
+              ) : userVoteIndex !== null ? (
+                <span className="text-neon-green flex items-center gap-1">
+                  <CheckCircle2 size={11} /> Vote registered
+                </span>
+              ) : (
+                <span className="text-gray-400">Click any option to vote</span>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

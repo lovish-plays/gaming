@@ -280,9 +280,9 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
           {messages.length === 0 ? (
             <div className="h-44 flex flex-col items-center justify-center text-center text-gray-500 text-xs px-4">
               <MessageSquare size={26} className="text-gray-600 mb-2 opacity-60" />
-              <p className="font-semibold text-gray-400">Welcome to Underground Lounge Chat!</p>
+              <p className="font-semibold text-gray-300">No messages yet. Say hello to the lounge!</p>
               <p className="text-[11px] text-gray-500 mt-0.5">
-                Drop a message or challenge someone to a match.
+                Drop a message or challenge someone to a pool or PS5 match.
               </p>
             </div>
           ) : (

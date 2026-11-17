@@ -72,20 +72,13 @@ interface OpenStationAlert {
   createdAt: number;
 }
 
-const DEFAULT_STATIONS: Station[] = [
-  { id: '1', name: 'Table 1', type: 'TABLE', status: 'FREE', booked_until: null, updated_at: '' },
-  { id: '2', name: 'Table 2', type: 'TABLE', status: 'FREE', booked_until: null, updated_at: '' },
-  { id: '3', name: 'Console 1 (PlayStation)', type: 'CONSOLE', status: 'FREE', booked_until: null, updated_at: '' },
-  { id: '4', name: 'Console 2 (PlayStation)', type: 'CONSOLE', status: 'FREE', booked_until: null, updated_at: '' },
-];
-
 interface LiveStationsProps {
   profile: Profile | null;
 }
 
 export default function LiveStations({ profile }: LiveStationsProps) {
-  const [stations, setStations] = useState<Station[]>(DEFAULT_STATIONS);
-  const [loading, setLoading] = useState(false);
+  const [stations, setStations] = useState<Station[]>([]);
+  const [loading, setLoading] = useState(true);
   const [connected, setConnected] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -466,10 +459,19 @@ export default function LiveStations({ profile }: LiveStationsProps) {
         </div>
       )}
 
-      {/* 4 Animated Station Cards */}
+      {/* Station Cards */}
       <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4">
-        <AnimatePresence mode="popLayout">
-          {stations.map((station, index) => {
+        {stations.length === 0 ? (
+          <div className="p-8 text-center text-xs text-gray-400 glass-card rounded-2xl border border-white/10 col-span-2 sm:col-span-4">
+            <Gamepad2 size={28} className="text-gray-500 mx-auto mb-2 opacity-60" />
+            <p className="font-semibold text-gray-300">No stations configured</p>
+            <p className="text-[11px] text-gray-500 mt-1">
+              Please check your station records in Supabase.
+            </p>
+          </div>
+        ) : (
+          <AnimatePresence mode="popLayout">
+            {stations.map((station, index) => {
             const isFree = station.status === 'FREE';
             const Icon = getStationIcon(station.type);
             const isToggling = toggling === station.id;
@@ -679,6 +681,7 @@ export default function LiveStations({ profile }: LiveStationsProps) {
             );
           })}
         </AnimatePresence>
+        )}
       </div>
 
       {/* Status Legend */}
