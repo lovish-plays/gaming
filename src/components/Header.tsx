@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Gamepad2, LogOut, User, Shield, Menu, X } from 'lucide-react';
+import { Gamepad2, LogOut, User, Shield, Menu, X, Crown } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
+import { getPlayerRank } from '@/lib/ranks';
+import { PlayerAvatar } from '@/lib/avatars';
 
 interface HeaderProps {
   profile: Profile | null;
@@ -20,8 +22,8 @@ export default function Header({ profile, onAuthClick }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-[#030306]/80 backdrop-blur-xl border-b border-white/10">
-      <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header className="sticky top-0 z-50 bg-[#030306]/85 backdrop-blur-xl border-b border-white/10">
+      <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-xl bg-neon-green/10 border border-neon-green/30 flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.2)]">
@@ -42,13 +44,14 @@ export default function Header({ profile, onAuthClick }: HeaderProps) {
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-xl glass-card border border-white/10 hover:border-neon-green/40 transition-colors"
+              className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl glass-card border border-white/10 hover:border-neon-green/40 transition-colors"
             >
-              {profile.role === 'ADMIN' ? (
-                <Shield size={14} className="text-gold" />
-              ) : (
-                <User size={14} className="text-gray-400" />
-              )}
+              <PlayerAvatar
+                avatarId={profile.avatar_id}
+                name={profile.full_name}
+                tier={profile.role === 'ADMIN' ? 'ADMIN' : undefined}
+                size="sm"
+              />
               <span className="text-xs font-semibold text-white max-w-24 truncate">
                 {profile.full_name.split(' ')[0]}
               </span>
@@ -65,13 +68,26 @@ export default function Header({ profile, onAuthClick }: HeaderProps) {
                   <p className="text-xs font-bold text-white truncate">
                     {profile.full_name}
                   </p>
-                  <p className="text-[11px] text-gray-400 truncate mt-0.5">📞 {profile.phone}</p>
-                  {profile.role === 'ADMIN' && (
-                    <span className="mt-1.5 inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/15 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      <Shield size={10} />
-                      Admin
-                    </span>
-                  )}
+                  <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                    {profile.phone ? `📞 +91 ${profile.phone}` : (profile.email ? `✉️ ${profile.email}` : '🔒 Phone unlinked')}
+                  </p>
+                  <div className="mt-2 flex items-center gap-1.5">
+                    {(() => {
+                      const rank = getPlayerRank(profile.total_spent, profile.role);
+                      return (
+                        <span
+                          className={`inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border ${rank.colorClasses}`}
+                        >
+                          {rank.title === 'Lounge Boss' || rank.title === 'Underground Legend' ? (
+                            <Crown size={9} fill="currentColor" />
+                          ) : (
+                            <Shield size={9} />
+                          )}
+                          <span>{rank.title}</span>
+                        </span>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <button
                   onClick={handleSignOut}

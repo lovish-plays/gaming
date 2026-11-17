@@ -20,6 +20,8 @@ import {
 import { Html5Qrcode } from 'html5-qrcode';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
+import { getPlayerRank } from '@/lib/ranks';
+import { PlayerAvatar } from '@/lib/avatars';
 
 const MILESTONE = 1000;
 
@@ -488,13 +490,25 @@ export default function AdminTerminal() {
             </button>
 
             <div className="flex items-start gap-3.5">
-              <div className="w-11 h-11 rounded-2xl bg-gold/15 border border-gold/30 flex items-center justify-center text-gold font-black text-lg flex-shrink-0">
-                {customer.full_name.charAt(0).toUpperCase()}
-              </div>
+              <PlayerAvatar
+                avatarId={customer.avatar_id}
+                name={customer.full_name}
+                tier={getPlayerRank(customer.total_spent, customer.role).title}
+                size="md"
+              />
               <div>
-                <p className="font-bold text-white text-base leading-tight">
-                  {customer.full_name}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="font-bold text-white text-base leading-tight">
+                    {customer.full_name}
+                  </p>
+                  <span
+                    className={`inline-flex items-center text-[9px] font-black uppercase px-1.5 py-0.2 rounded border ${
+                      getPlayerRank(customer.total_spent, customer.role).colorClasses
+                    }`}
+                  >
+                    {getPlayerRank(customer.total_spent, customer.role).title}
+                  </span>
+                </div>
                 <p className="text-xs text-gray-400 mt-0.5">📞 {customer.phone}</p>
                 <span className="text-[10px] text-gray-500 font-mono">
                   ID: {customer.id.slice(0, 8)}…

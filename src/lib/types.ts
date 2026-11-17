@@ -8,14 +8,17 @@ export interface Station {
   name: string;
   type: StationType;
   status: StationStatus;
+  booked_until?: string | null;
   updated_at: string;
 }
 
 export interface Profile {
   id: string;
+  email?: string | null;
   full_name: string;
-  phone: string;
+  phone?: string | null;
   role: UserRole;
+  avatar_id?: string;
   spend_progress: number;
   total_spent: number;
   free_hours: number;
@@ -31,6 +34,50 @@ export interface LoyaltyLog {
   amount_inr: number;
   hours_changed: number;
   created_at: string;
+}
+
+export interface TopGamer {
+  rank: number;
+  id: string;
+  full_name: string;
+  masked_phone: string;
+  total_spent: number;
+  free_hours_unlocked: number;
+  avatar_id?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  user_id: string;
+  sender_name: string;
+  sender_role: string;
+  sender_tier?: string;
+  sender_avatar?: string;
+  content: string;
+  created_at: string;
+}
+
+export interface Poll {
+  id: string;
+  question: string;
+  options: string[];
+  is_active: boolean;
+  created_by?: string | null;
+  created_at: string;
+}
+
+export interface PollVote {
+  id: string;
+  poll_id: string;
+  user_id: string;
+  option_index: number;
+  created_at: string;
+}
+
+export interface MentionableUser {
+  id: string;
+  full_name: string;
+  avatar_id?: string;
 }
 
 export type Database = {

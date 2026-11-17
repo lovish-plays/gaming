@@ -4,37 +4,43 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
 import Header from '@/components/Header';
-import LiveStations from '@/components/LiveStations';
-import CustomerWallet from '@/components/CustomerWallet';
+import ParallaxHero from '@/components/ParallaxHero';
 import AdminTerminal from '@/components/AdminTerminal';
+import LiveStations from '@/components/LiveStations';
+import PricingSection from '@/components/PricingSection';
+import CommunityPoll from '@/components/CommunityPoll';
+import LoungeChat from '@/components/LoungeChat';
+import CustomerWallet from '@/components/CustomerWallet';
+import Leaderboard from '@/components/Leaderboard';
 import AuthForm from '@/components/AuthForm';
-import { CyclingQuoteBadge, ScrollingQuotesMarquee } from '@/components/GamingQuotes';
-import { Gamepad2, Shield, QrCode, ArrowRight, ChevronDown } from 'lucide-react';
+import { Gamepad2, Shield, QrCode, ArrowRight, Sparkles } from 'lucide-react';
 
 export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [showAuth, setShowAuth] = useState(false);
 
   const supabase = createClient();
 
-  // Load session and profile on mount
+  // Load session and profile on mount safely without blocking page render
   useEffect(() => {
     let mounted = true;
 
     const loadProfile = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (session?.user && mounted) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (mounted) setProfile(data ?? null);
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.user && mounted) {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          if (mounted) setProfile(data ?? null);
+        }
+      } catch (err) {
+        console.warn('Session check note:', err);
       }
-      if (mounted) setLoading(false);
     };
 
     loadProfile();
@@ -44,14 +50,18 @@ export default function HomePage() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-        if (mounted) {
-          setProfile(data ?? null);
-          setShowAuth(false);
+        try {
+          const { data } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          if (mounted) {
+            setProfile(data ?? null);
+            setShowAuth(false);
+          }
+        } catch {
+          // ignore
         }
       } else {
         if (mounted) setProfile(null);
@@ -64,166 +74,104 @@ export default function HomePage() {
     };
   }, [supabase]);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-transparent flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neon-green/10 border border-neon-green/30 mb-4 animate-pulse shadow-[0_0_25px_rgba(16,185,129,0.2)]">
-            <Gamepad2 size={32} className="text-neon-green" />
-          </div>
-          <p className="text-xs uppercase tracking-widest text-gray-400 font-mono">
-            Loading Underground Lounge…
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   if (showAuth) {
-    return <AuthForm />;
+    return <AuthForm onClose={() => setShowAuth(false)} />;
   }
 
   return (
     <div className="min-h-screen bg-transparent text-white">
       <Header profile={profile} onAuthClick={() => setShowAuth(true)} />
 
-      <main className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
+      <main className="max-w-3xl mx-auto px-4 py-4 sm:py-6">
         {/* ======================================================== */}
-        {/* HERO TITLE & BRAND (CLEAN, NON-BOXED, SCROLLING)        */}
+        {/* 1. 3D PARALLAX SCROLL-DRIVEN HERO SECTION                */}
         {/* ======================================================== */}
-        <section className="pt-4 pb-6 text-center">
-          {/* Randomly Cycling Famous Gaming Quotes Badge */}
-          <CyclingQuoteBadge />
-
-          {/* Primary Prominent Bold Header */}
-          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] leading-tight mb-2 bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]">
-            Underground
-          </h1>
-
-          {/* Tagline Subtitle */}
-          <p className="text-xs sm:text-sm font-extrabold uppercase tracking-[0.3em] sm:tracking-[0.4em] text-neon-green drop-shadow-[0_0_16px_rgba(16,185,129,0.5)] mb-5">
-            A Gaming Playstation
-          </p>
-
-          {/* Feature Badges */}
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-xs text-gray-300 mb-4 max-w-md mx-auto">
-            <span className="px-3 py-1 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md shadow-sm">
-              🎮 2× PS5 Consoles
-            </span>
-            <span className="px-3 py-1 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md shadow-sm">
-              🎱 2× Pool Tables
-            </span>
-            <span className="px-3 py-1 rounded-xl bg-black/50 border border-gold/30 text-gold backdrop-blur-md shadow-sm">
-              ⭐ ₹1,000 = 1 Free Hour
-            </span>
-          </div>
-
-          {/* Smooth Continuous Scrolling Quotes Ticker */}
-          <ScrollingQuotesMarquee />
-
-          {/* Quick-Scroll to Live Floor Button */}
-          <div className="mt-5">
-            <button
-              onClick={() => {
-                const el = document.getElementById('floor-status');
-                el?.scrollIntoView({ behavior: 'smooth' });
-              }}
-              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neon-green/15 hover:bg-neon-green/25 border border-neon-green/30 text-neon-green text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] backdrop-blur-md"
-            >
-              <span>Live Floor Availability</span>
-              <ChevronDown size={14} className="transition-transform duration-300 group-hover:translate-y-0.5" />
-            </button>
-          </div>
-        </section>
+        <ParallaxHero />
 
         {/* ======================================================== */}
-        {/* LOGGED IN USER QUICK BANNER                             */}
+        {/* 2. ADMIN TERMINAL (SHOWN ONLY TO USERS WITH ROLE === ADMIN) */}
         {/* ======================================================== */}
-        {profile && (
-          <div className="mb-6 rounded-2xl glass-card border border-white/10 p-4 flex items-center justify-between shadow-lg">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center text-neon-green font-bold">
-                {profile.full_name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm font-bold text-white">
-                    {profile.full_name}
-                  </p>
-                  {profile.role === 'ADMIN' ? (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gold bg-gold/15 border border-gold/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      <Shield size={10} /> Admin
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-semibold text-neon-green bg-neon-green/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                      Member
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-gray-400 mt-0.5">📞 {profile.phone}</p>
-              </div>
-            </div>
-
-            {profile.role === 'CUSTOMER' && (
-              <div className="text-right">
-                <span className="text-xs text-gray-400 block font-medium">Free Hours</span>
-                <span className="text-lg font-black text-gold font-mono">
-                  {profile.free_hours} hrs
-                </span>
-              </div>
-            )}
+        {profile?.role === 'ADMIN' && (
+          <div className="mb-8">
+            <AdminTerminal />
           </div>
         )}
 
         {/* ======================================================== */}
-        {/* ADMIN TERMINAL (CAMERA SCANNER + PHONE + ADD/REDEEM)    */}
-        {/* ======================================================== */}
-        {profile?.role === 'ADMIN' && <AdminTerminal />}
-
-        {/* ======================================================== */}
-        {/* LIVE FLOOR STATUS (4 STATIONS WITH 3D TILT ANIMATION)   */}
+        {/* 3. REAL-TIME LIVE STATIONS (POOL TABLES & CONSOLES)      */}
         {/* ======================================================== */}
         <LiveStations profile={profile} />
 
         {/* ======================================================== */}
-        {/* CUSTOMER WALLET + DIGITAL MEMBER QR PASS                 */}
+        {/* 4. TIME-AWARE PRICING & HAPPY HOURS SECTION              */}
         {/* ======================================================== */}
-        {profile && profile.role === 'CUSTOMER' && (
-          <CustomerWallet initialProfile={profile} />
-        )}
+        <PricingSection />
 
         {/* ======================================================== */}
-        {/* GUEST REWARDS CTA BANNER                                */}
+        {/* 5. INTERACTIVE COMMUNITY: LIVE POLL & LOUNGE LIVE CHAT   */}
         {/* ======================================================== */}
-        {!profile && (
-          <div className="mt-4 mb-8 rounded-2xl glass-card border border-gold/30 p-6 text-center relative overflow-hidden shadow-[0_0_35px_rgba(245,158,11,0.1)]">
-            <div className="absolute top-0 right-0 w-36 h-36 rounded-full bg-gold/5 blur-2xl pointer-events-none" />
-            <div className="w-12 h-12 rounded-2xl bg-gold/15 border border-gold/30 mx-auto flex items-center justify-center text-gold mb-3">
-              <QrCode size={24} />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-stretch">
+          <CommunityPoll profile={profile} onAuthClick={() => setShowAuth(true)} />
+          <LoungeChat profile={profile} onAuthClick={() => setShowAuth(true)} />
+        </div>
+
+        {/* ======================================================== */}
+        {/* 6. CUSTOMER WALLET (IF LOGGED IN) OR CLEAN AUTH CARD     */}
+        {/* ======================================================== */}
+        {profile && profile.role === 'CUSTOMER' ? (
+          <CustomerWallet
+            initialProfile={profile}
+            onProfileUpdate={(updated) => setProfile(updated)}
+          />
+        ) : !profile ? (
+          <section id="auth-card" className="mb-8 scroll-mt-20">
+            <div className="relative overflow-hidden rounded-2xl glass-card border border-gold/40 p-6 sm:p-8 text-center shadow-[0_0_35px_rgba(245,158,11,0.12)]">
+              {/* Background ambient glow */}
+              <div className="absolute top-0 right-0 w-44 h-44 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-44 h-44 rounded-full bg-neon-green/10 blur-3xl pointer-events-none" />
+
+              <div className="w-12 h-12 rounded-2xl bg-gold/15 border border-gold/30 mx-auto flex items-center justify-center text-gold mb-3.5 shadow-inner">
+                <QrCode size={24} />
+              </div>
+
+              <span className="text-[10px] font-black uppercase tracking-[0.25em] text-gold block mb-1">
+                VIP Gaming Rewards
+              </span>
+              <h3 className="text-xl sm:text-2xl font-black text-white mb-2 tracking-wide">
+                Get Your Digital Member Pass
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-300 max-w-md mx-auto mb-5 leading-relaxed">
+                Spend <span className="text-gold font-bold">₹1,000</span> across visits and unlock <span className="text-neon-green font-bold">1 Free Hour</span> on any Pool Table or PS5 Console. Track your balance and checkout instantly at the counter with your personal QR pass.
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <button
+                  onClick={() => setShowAuth(true)}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gold text-brand-bg text-xs font-black uppercase tracking-wider hover:bg-gold-dim active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-pointer"
+                >
+                  <Sparkles size={14} />
+                  <span>Sign In or Claim Free Pass</span>
+                  <ArrowRight size={14} />
+                </button>
+              </div>
             </div>
-            <h3 className="text-lg font-black text-white mb-1 tracking-wide">
-              Unlock Your Digital Member Pass
-            </h3>
-            <p className="text-xs text-gray-400 max-w-sm mx-auto mb-4">
-              Earn 1 Free Gaming Hour for every ₹1,000 spent. Get your scannable counter QR pass and track balance in real time.
-            </p>
-            <button
-              onClick={() => setShowAuth(true)}
-              className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gold text-brand-bg text-sm font-bold hover:bg-gold-dim active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.25)]"
-            >
-              <span>Join VIP Rewards</span>
-              <ArrowRight size={15} />
-            </button>
-          </div>
-        )}
+          </section>
+        ) : null}
 
-        {/* Footer */}
+        {/* ======================================================== */}
+        {/* 6. HALL OF FAME LEADERBOARD (TOP 5 GAMERS)               */}
+        {/* ======================================================== */}
+        <Leaderboard />
+
+        {/* ======================================================== */}
+        {/* FOOTER                                                   */}
+        {/* ======================================================== */}
         <footer className="mt-12 pb-8 text-center text-xs text-gray-500 border-t border-white/10 pt-6">
           <p className="font-bold text-gray-400 uppercase tracking-widest">
             Underground <span className="text-neon-green">· A Gaming Playstation</span>
           </p>
           <p className="text-[11px] text-gray-500 mt-1">
-            Real-time Station WebSockets · Digital Member QR Pass · High-Score Lounge
+            Real-time Station WebSockets · Digital Member QR Pass · Happy Hours Lounge
           </p>
         </footer>
       </main>
