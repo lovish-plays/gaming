@@ -32,9 +32,20 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
   const [mentionIndex, setMentionIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
   const isAdmin = profile?.role === 'ADMIN';
+
+  // Helper to scroll ONLY the chat box without scrolling the browser window
+  const scrollChatToBottom = (smooth = false) => {
+    if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTo({
+        top: messagesContainerRef.current.scrollHeight,
+        behavior: smooth ? 'smooth' : 'auto',
+      });
+    }
+  };
 
   // 1. Fetch initial message history
   const fetchMessages = useCallback(async () => {
@@ -91,7 +102,7 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
             return [...prev, newMsg];
           });
           setTimeout(() => {
-            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+            scrollChatToBottom(true);
           }, 50);
         }
       )
@@ -109,9 +120,9 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
     };
   }, [fetchMessages, fetchMentionUsers, supabase]);
 
-  // Auto-scroll on initial mount
+  // Auto-scroll chat box only on message update (never scrolls page window)
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+    scrollChatToBottom(false);
   }, [messages.length]);
 
   // Handle typing & @mention autocomplete detection
@@ -195,7 +206,7 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
       if (error) throw error;
       setInput('');
       setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        scrollChatToBottom(true);
       }, 50);
     } catch (err) {
       console.error('Send message error:', err);
@@ -265,7 +276,7 @@ export default function LoungeChat({ profile, onAuthClick }: LoungeChatProps) {
       {/* Main Glassmorphic Chat Window */}
       <div className="flex-1 rounded-2xl glass-card border border-white/10 flex flex-col justify-between shadow-xl backdrop-blur-xl overflow-hidden min-h-[350px]">
         {/* Messages Feed Container */}
-        <div className="p-3.5 sm:p-4 overflow-y-auto max-h-[340px] flex-1 space-y-3">
+        <div ref={messagesContainerRef} className="p-3.5 sm:p-4 overflow-y-auto max-h-[340px] flex-1 space-y-3">
           {messages.length === 0 ? (
             <div className="h-44 flex flex-col items-center justify-center text-center text-gray-500 text-xs px-4">
               <MessageSquare size={26} className="text-gray-600 mb-2 opacity-60" />

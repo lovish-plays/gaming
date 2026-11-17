@@ -300,7 +300,7 @@ export default function AdminTerminal() {
     setNotFound(false);
     setPhone('');
     setBillAmount('');
-    setTimeout(() => phoneRef.current?.focus(), 100);
+    setTimeout(() => phoneRef.current?.focus({ preventScroll: true }), 100);
   };
 
   const progressPct = customer

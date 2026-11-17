@@ -27,6 +27,16 @@ export default function HomePage() {
     setShowAuth(true);
   };
 
+  // Ensure the page always starts from the very top on load/refresh
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if ('scrollRestoration' in window.history) {
+        window.history.scrollRestoration = 'manual';
+      }
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    }
+  }, []);
+
   // Load session and profile on mount safely without blocking page render
   useEffect(() => {
     let mounted = true;
