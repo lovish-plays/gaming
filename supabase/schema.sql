@@ -808,14 +808,6 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_mentionable_users() TO anon, authenticated;
 
--- Pre-seed an initial community poll if none exists
-INSERT INTO public.polls (question, options, is_active)
-SELECT 
-  'Which game should we install next on PS5?',
-  '["EA Sports FC 26", "Tekken 8", "GTA V", "Mortal Kombat 1"]'::jsonb,
-  true
-WHERE NOT EXISTS (SELECT 1 FROM public.polls);
-
 -- ============================================================
 -- 8. REALTIME PUBLICATIONS (SAFE / IDEMPOTENT)
 -- ============================================================

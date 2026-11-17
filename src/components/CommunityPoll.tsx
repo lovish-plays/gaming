@@ -10,7 +10,7 @@ import {
   Lock,
   Sparkles,
   BarChart3,
-  Flame,
+  Clock,
   Shield,
   Loader2,
 } from 'lucide-react';
@@ -22,12 +22,15 @@ interface CommunityPollProps {
   onAuthClick?: () => void;
 }
 
+const POLL_MAX_DURATION_MS = 24 * 60 * 60 * 1000; // 24 Hours
+
 export default function CommunityPoll({ profile, onAuthClick }: CommunityPollProps) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [votes, setVotes] = useState<PollVote[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submittingVote, setSubmittingVote] = useState(false);
   const [showAdminCreator, setShowAdminCreator] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number } | null>(null);
 
   // Admin creator form state
   const [newQuestion, setNewQuestion] = useState('');
@@ -38,41 +41,52 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
   const supabase = createClient();
   const isAdmin = profile?.role === 'ADMIN';
 
-  // Fetch latest poll and associated votes
+  // Fetch only active admin poll that is within the 24-hour window
   const fetchPollData = useCallback(async () => {
     try {
-      // 1. Fetch latest active poll (fallback to newest closed poll)
-      const { data: activePolls } = await supabase
+      const { data: activePolls, error: pollErr } = await supabase
         .from('polls')
         .select('*')
         .eq('is_active', true)
         .order('created_at', { ascending: false })
         .limit(1);
 
-      let currentPoll = activePolls?.[0] || null;
+      if (pollErr) throw pollErr;
 
-      if (!currentPoll) {
-        const { data: latestPolls } = await supabase
-          .from('polls')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(1);
-        currentPoll = latestPolls?.[0] || null;
+      const candidate = activePolls?.[0] || null;
+
+      if (candidate) {
+        const createdAtTime = new Date(candidate.created_at).getTime();
+        const elapsedMs = Date.now() - createdAtTime;
+
+        // Check if within the 24-hour window
+        if (elapsedMs < POLL_MAX_DURATION_MS) {
+          setPoll(candidate);
+
+          // Fetch associated votes
+          const { data: voteData } = await supabase
+            .from('poll_votes')
+            .select('*')
+            .eq('poll_id', candidate.id);
+
+          setVotes(voteData || []);
+          return;
+        } else {
+          // Poll exceeded 24 hours — auto-deactivate in background
+          try {
+            await supabase
+              .from('polls')
+              .update({ is_active: false })
+              .eq('id', candidate.id);
+          } catch {
+            // Ignore deactivation warning
+          }
+        }
       }
 
-      setPoll(currentPoll);
-
-      // 2. Fetch votes for this poll
-      if (currentPoll) {
-        const { data: voteData } = await supabase
-          .from('poll_votes')
-          .select('*')
-          .eq('poll_id', currentPoll.id);
-
-        setVotes(voteData || []);
-      } else {
-        setVotes([]);
-      }
+      // No active poll within 24h
+      setPoll(null);
+      setVotes([]);
     } catch (err) {
       console.warn('Poll fetch warning:', err);
       setPoll(null);
@@ -82,10 +96,10 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
     }
   }, [supabase]);
 
+  // Initial fetch and real-time subscription
   useEffect(() => {
     fetchPollData();
 
-    // Subscribe to live poll and vote changes
     const channel = supabase
       .channel('polls-live-realtime')
       .on(
@@ -104,6 +118,33 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
       supabase.removeChannel(channel);
     };
   }, [fetchPollData, supabase]);
+
+  // 24-hour remaining countdown timer
+  useEffect(() => {
+    if (!poll) {
+      setTimeLeft(null);
+      return;
+    }
+
+    const calculateRemaining = () => {
+      const createdTime = new Date(poll.created_at).getTime();
+      const remainingMs = createdTime + POLL_MAX_DURATION_MS - Date.now();
+
+      if (remainingMs <= 0) {
+        setPoll(null);
+        setVotes([]);
+        setTimeLeft(null);
+      } else {
+        const hours = Math.floor(remainingMs / (1000 * 60 * 60));
+        const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+        setTimeLeft({ hours, minutes });
+      }
+    };
+
+    calculateRemaining();
+    const interval = setInterval(calculateRemaining, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, [poll]);
 
   // Vote calculation
   const totalVotes = votes.length;
@@ -156,7 +197,7 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
     }
   };
 
-  // Admin: Launch new live poll
+  // Admin: Launch new 24-hour live poll
   const handleCreatePoll = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isAdmin || creatingPoll) return;
@@ -177,13 +218,13 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
     setError(null);
 
     try {
-      // 1. Deactivate any existing active poll
+      // 1. Deactivate any previous active poll
       await supabase
         .from('polls')
         .update({ is_active: false })
         .eq('is_active', true);
 
-      // 2. Insert the new active poll
+      // 2. Insert new 24-hour poll
       const { data, error: insertErr } = await supabase
         .from('polls')
         .insert({
@@ -210,7 +251,7 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
     }
   };
 
-  // Admin: Close active poll
+  // Admin: Manually Close active poll
   const handleClosePoll = async () => {
     if (!isAdmin || !poll) return;
     try {
@@ -219,7 +260,8 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
         .update({ is_active: false })
         .eq('id', poll.id);
 
-      setPoll((prev) => (prev ? { ...prev, is_active: false } : prev));
+      setPoll(null);
+      setVotes([]);
     } catch (err) {
       console.error('Close poll error:', err);
     }
@@ -255,15 +297,22 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
             <span>Community Poll</span>
             {poll?.is_active ? (
               <span className="flex items-center gap-1 text-[9px] font-bold text-neon-green bg-neon-green/15 border border-neon-green/30 px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
-                Live Voting
+                <Clock size={10} />
+                <span>
+                  Live {timeLeft ? `· ${timeLeft.hours}h ${timeLeft.minutes}m left` : '· 24h Poll'}
+                </span>
               </span>
             ) : (
-              <span className="text-[9px] font-bold text-gray-400 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Closed
+              <span className="text-[9px] font-bold text-gray-500 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                No active polls
               </span>
             )}
           </h3>
-          <p className="text-[11px] text-gray-400">Vote on lounge features &amp; next games</p>
+          <p className="text-[11px] text-gray-400">
+            {poll
+              ? 'Vote on lounge features · Active for 24 hours'
+              : 'Polls appear only when launched by admin'}
+          </p>
         </div>
 
         {/* Admin Toggle Button */}
@@ -293,47 +342,62 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
           onSubmit={handleCreatePoll}
           className="mb-4 rounded-2xl glass-card border border-gold/30 p-4 shadow-xl"
         >
-          <div className="flex items-center gap-2 mb-3">
-            <Shield size={14} className="text-gold" />
-            <span className="text-xs font-bold text-gold uppercase tracking-wider">
-              Create New Live Cafe Poll
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2">
+              <Shield size={14} className="text-gold" />
+              <span className="text-xs font-bold text-gold uppercase tracking-wider">
+                Launch 24-Hour Live Poll
+              </span>
+            </div>
+            <span className="text-[10px] text-gray-400 font-mono">
+              Auto-closes in 24 hrs
             </span>
           </div>
 
+          <p className="text-[11px] text-gray-400 mb-3">
+            This poll will be displayed live to all lounge members for exactly 24 hours.
+          </p>
+
+          <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+            Poll Question
+          </label>
           <input
             type="text"
+            required
             value={newQuestion}
             onChange={(e) => setNewQuestion(e.target.value)}
-            placeholder="Poll Question (e.g. Which game should we add?)"
+            placeholder="e.g. Which PS5 game should we host a tournament for?"
             className="w-full px-3 py-2 text-xs rounded-xl bg-black/60 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-gold mb-3"
-            maxLength={140}
           />
 
+          <label className="block text-[11px] font-semibold text-gray-300 mb-1">
+            Options (2 to 4)
+          </label>
           <div className="space-y-2 mb-3">
             {newOptions.map((opt, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <input
                   type="text"
+                  required={idx < 2}
                   value={opt}
                   onChange={(e) => handleOptionChange(idx, e.target.value)}
                   placeholder={`Option ${idx + 1}`}
                   className="flex-1 px-3 py-1.5 text-xs rounded-xl bg-black/40 border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-gold"
-                  maxLength={50}
                 />
                 {newOptions.length > 2 && (
                   <button
                     type="button"
                     onClick={() => removeOptionField(idx)}
-                    className="p-1.5 text-gray-400 hover:text-crimson transition-colors"
+                    className="p-1.5 text-gray-500 hover:text-crimson"
                   >
-                    <X size={13} />
+                    <X size={12} />
                   </button>
                 )}
               </div>
             ))}
           </div>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-1">
             {newOptions.length < 4 ? (
               <button
                 type="button"
@@ -351,7 +415,7 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
               className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gold hover:bg-gold-dim text-brand-bg text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
             >
               {creatingPoll ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />}
-              <span>Launch Live Poll</span>
+              <span>Launch 24h Live Poll</span>
             </button>
           </div>
         </motion.form>
@@ -365,23 +429,42 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
         {!poll ? (
           <div className="h-44 flex flex-col items-center justify-center text-center text-gray-500 text-xs px-4 my-auto">
             <Vote size={28} className="text-gray-600 mb-2 opacity-60" />
-            <p className="font-semibold text-gray-300">No active poll right now</p>
-            <p className="text-[11px] text-gray-500 mt-0.5">
-              Check back soon or ask the lounge admin to launch a community poll!
+            <p className="font-bold text-gray-300 text-sm">No polls yet</p>
+            <p className="text-[11px] text-gray-500 mt-1 max-w-xs leading-relaxed">
+              Community polls appear only when launched by the admin and remain active for 24 hours.
             </p>
+            {isAdmin && !showAdminCreator && (
+              <button
+                type="button"
+                onClick={() => setShowAdminCreator(true)}
+                className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gold/15 text-gold border border-gold/30 hover:bg-gold/25 transition-all text-xs font-bold cursor-pointer"
+              >
+                <PlusCircle size={13} />
+                <span>Launch a 24h Poll</span>
+              </button>
+            )}
           </div>
         ) : (
           <>
             <div>
-              {/* Poll Question */}
+              {/* Poll Question & Header */}
               <div className="flex items-start justify-between gap-3 mb-4">
-                <h4 className="text-sm sm:text-base font-extrabold text-white leading-snug">
-                  {poll.question}
-                </h4>
+                <div className="min-w-0">
+                  <h4 className="text-sm sm:text-base font-extrabold text-white leading-snug">
+                    {poll.question}
+                  </h4>
+                  {timeLeft && (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-neon-green font-mono font-semibold mt-1">
+                      <Clock size={10} />
+                      <span>Closes in {timeLeft.hours}h {timeLeft.minutes}m</span>
+                    </span>
+                  )}
+                </div>
+
                 {isAdmin && poll.is_active && (
                   <button
                     onClick={handleClosePoll}
-                    className="text-[10px] font-bold text-gray-400 hover:text-crimson px-2 py-0.5 rounded border border-white/10 hover:border-crimson/40 transition-colors flex-shrink-0"
+                    className="text-[10px] font-bold text-gray-400 hover:text-crimson px-2 py-0.5 rounded border border-white/10 hover:border-crimson/40 transition-colors flex-shrink-0 cursor-pointer"
                   >
                     Close Poll
                   </button>
@@ -467,7 +550,7 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
               {!profile ? (
                 <button
                   onClick={onAuthClick}
-                  className="text-gold hover:underline font-semibold flex items-center gap-1"
+                  className="text-gold hover:underline font-semibold flex items-center gap-1 cursor-pointer"
                 >
                   Sign in to vote
                 </button>
