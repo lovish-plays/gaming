@@ -1,7 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock, Trophy, TrendingUp, Star, ChevronRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { QRCodeSVG } from 'qrcode.react';
+import {
+  Clock,
+  Trophy,
+  TrendingUp,
+  Star,
+  ChevronRight,
+  QrCode,
+  Sparkles,
+  Phone,
+  ShieldCheck,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
 
@@ -43,138 +55,212 @@ export default function CustomerWallet({ initialProfile }: CustomerWalletProps) 
 
   return (
     <section className="mb-8">
-      <h2 className="text-xl font-bold text-white tracking-tight mb-4">
-        My Loyalty Wallet
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-white tracking-tight flex items-center gap-2">
+          <span>My Loyalty Wallet</span>
+          <span className="text-[10px] font-semibold text-gold bg-gold/15 border border-gold/30 px-2 py-0.5 rounded-full uppercase tracking-wider">
+            VIP Pass
+          </span>
+        </h2>
+        <span className="text-xs text-gray-500 flex items-center gap-1">
+          <ShieldCheck size={12} className="text-neon-green" /> Live Synced
+        </span>
+      </div>
 
-      <div className="space-y-3">
-        {/* Free Hours Balance Card */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gold/10 to-brand-card border border-gold/30 p-5 glow-gold">
-          {/* Background decoration */}
-          <div className="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-gold/5" />
-          <div className="absolute -right-2 -top-2 w-16 h-16 rounded-full bg-gold/8" />
+      <div className="space-y-4">
+        {/* ======================================================== */}
+        {/* VIP DIGITAL MEMBER QR PASS + BALANCE CARD               */}
+        {/* ======================================================== */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="relative overflow-hidden rounded-2xl glass-card border border-gold/40 p-5 shadow-[0_0_35px_rgba(245,158,11,0.12)]"
+        >
+          {/* Subtle Ambient Radial Glow */}
+          <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-44 h-44 rounded-full bg-neon-green/10 blur-3xl pointer-events-none" />
 
-          <div className="relative flex items-start justify-between">
-            <div>
-              <p className="text-xs text-gold/70 font-medium uppercase tracking-widest mb-1">
-                Free Hours Balance
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-black text-gold">
-                  {profile.free_hours}
-                </span>
-                <span className="text-gold/60 text-lg font-semibold">hrs</span>
-              </div>
-              <p className="text-xs text-gray-500 mt-1">
-                Valid on any station or game
-              </p>
-            </div>
-            <div className="p-3 rounded-xl bg-gold/15">
-              <Clock size={28} className="text-gold" />
-            </div>
-          </div>
-
-          {profile.free_hours > 0 && (
-            <div className="mt-4 flex items-center gap-2 text-xs text-gold/80 bg-gold/10 rounded-lg px-3 py-2">
-              <Star size={12} className="fill-gold text-gold flex-shrink-0" />
-              You have {profile.free_hours} free hour{profile.free_hours !== 1 ? 's' : ''} — show this to the counter staff to redeem!
-            </div>
-          )}
-        </div>
-
-        {/* Progress Card */}
-        <div className="rounded-xl bg-brand-card border border-brand-border p-5">
-          <div className="flex items-center justify-between mb-3">
+          {/* Member Pass Header */}
+          <div className="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-neon-green/10">
-                <TrendingUp size={16} className="text-neon-green" />
-              </div>
-              <span className="text-sm font-semibold text-white">
-                Next Free Hour
-              </span>
+              <div className="w-2 h-2 rounded-full bg-gold animate-pulse" />
+              <p className="text-[11px] font-bold tracking-[0.2em] text-gold uppercase">
+                Underground Digital Pass
+              </p>
             </div>
-            <span className="text-xs text-gray-500">
-              ₹{profile.spend_progress.toLocaleString('en-IN')} / ₹{MILESTONE.toLocaleString('en-IN')}
+            <span className="text-[10px] font-mono text-gray-500 truncate max-w-[130px]">
+              ID: {profile.id.slice(0, 8)}…
             </span>
           </div>
 
-          {/* Progress bar */}
-          <div className="relative h-3 rounded-full bg-brand-bg overflow-hidden border border-brand-border">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-neon-green-dim to-neon-green transition-all duration-700 ease-out"
-              style={{ width: `${progressPct}%` }}
-            />
-            {/* Shimmer effect */}
-            {progressPct > 5 && (
-              <div
-                className="absolute top-0 h-full w-8 bg-gradient-to-r from-transparent via-white/20 to-transparent"
-                style={{ left: `${Math.max(progressPct - 10, 0)}%` }}
-              />
-            )}
+          {/* Layout: QR Code + Free Hours Balance */}
+          <div className="flex flex-col sm:flex-row items-center gap-5">
+            {/* Scannable High-Contrast QR Code */}
+            <div className="flex flex-col items-center flex-shrink-0">
+              <div className="relative p-2.5 bg-white rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.35)] border-2 border-gold/50">
+                <QRCodeSVG
+                  value={profile.id}
+                  size={120}
+                  level="H"
+                  includeMargin={false}
+                  imageSettings={{
+                    src: '/favicon.svg',
+                    x: undefined,
+                    y: undefined,
+                    height: 24,
+                    width: 24,
+                    excavate: true,
+                  }}
+                />
+              </div>
+              <div className="mt-2 flex items-center gap-1 text-[10px] font-medium text-gray-400">
+                <QrCode size={11} className="text-gold" />
+                <span>Scan for Instant Checkout</span>
+              </div>
+            </div>
+
+            {/* Member Details & Free Hours */}
+            <div className="flex-1 w-full flex flex-col justify-between text-center sm:text-left">
+              <div>
+                <h3 className="text-lg font-black text-white tracking-wide">
+                  {profile.full_name}
+                </h3>
+                <p className="text-xs text-gray-400 flex items-center justify-center sm:justify-start gap-1 mt-0.5">
+                  <Phone size={11} className="text-neon-green" />
+                  <span>{profile.phone}</span>
+                </p>
+              </div>
+
+              {/* Free Hours Metric Box */}
+              <div className="mt-3 p-3 rounded-xl bg-black/40 border border-white/10 flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">
+                    Free Hours Available
+                  </p>
+                  <p className="text-xs text-gray-500">PlayStation or Pool</p>
+                </div>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-gold drop-shadow-[0_0_12px_rgba(245,158,11,0.4)]">
+                    {profile.free_hours}
+                  </span>
+                  <span className="text-gold/70 text-sm font-bold">hrs</span>
+                </div>
+              </div>
+
+              <p className="mt-2 text-[11px] text-gray-400 italic">
+                Show this QR pass or share your phone number at the counter.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* ======================================================== */}
+        {/* ANIMATED LOYALTY PROGRESS CARD (₹1,000 MILESTONE)        */}
+        {/* ======================================================== */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="rounded-2xl glass-card border border-white/10 p-5 shadow-lg"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-neon-green/10 border border-neon-green/20">
+                <TrendingUp size={15} className="text-neon-green" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-white block leading-tight">
+                  Next Free Hour Milestone
+                </span>
+                <span className="text-[10px] text-gray-400">
+                  Earn 1 hour for every ₹1,000 spent
+                </span>
+              </div>
+            </div>
+            <div className="text-right">
+              <span className="text-xs font-mono font-bold text-white">
+                ₹{profile.spend_progress.toLocaleString('en-IN')}
+              </span>
+              <span className="text-xs text-gray-500"> / ₹{MILESTONE.toLocaleString('en-IN')}</span>
+            </div>
           </div>
 
-          <div className="mt-3 flex items-center justify-between">
-            <p className="text-xs text-gray-400">
+          {/* Shimmering Animated Progress Bar */}
+          <div className="relative h-3.5 rounded-full bg-[#070710] overflow-hidden border border-white/10 p-0.5">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progressPct}%` }}
+              transition={{ duration: 0.8, ease: 'easeOut' }}
+              className="relative h-full rounded-full bg-gradient-to-r from-amber-500 via-yellow-300 to-amber-500 shadow-[0_0_12px_rgba(245,158,11,0.5)] overflow-hidden"
+            >
+              {/* Shimmer sweep effect */}
+              <div className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 to-transparent animate-shimmer" />
+            </motion.div>
+          </div>
+
+          <div className="mt-3 flex items-center justify-between text-xs">
+            <p className="text-gray-400">
               {progressPct >= 100 ? (
-                <span className="text-neon-green font-semibold">
-                  🎉 Milestone reached!
+                <span className="text-neon-green font-semibold flex items-center gap-1">
+                  <Sparkles size={12} /> Milestone ready! Claim at counter.
                 </span>
               ) : (
                 <>
                   Spend{' '}
-                  <span className="text-white font-semibold">
+                  <span className="text-white font-bold">
                     ₹{remaining.toLocaleString('en-IN')}
                   </span>{' '}
-                  more to unlock 1 Free Hour
+                  more to unlock your next hour
                 </>
               )}
             </p>
-            <span className="text-xs font-bold text-neon-green">
+            <span className="font-extrabold text-gold text-xs font-mono">
               {progressPct.toFixed(0)}%
             </span>
           </div>
-        </div>
+        </motion.div>
 
         {/* Stats Row */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl bg-brand-card border border-brand-border p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="rounded-xl glass-card border border-white/10 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
               <Trophy size={14} className="text-gold" />
-              <span className="text-xs text-gray-400 font-medium">Total Spent</span>
+              <span className="text-xs text-gray-400 font-medium">Lifetime Spend</span>
             </div>
-            <p className="text-2xl font-black text-white">
+            <p className="text-xl font-black text-white font-mono">
               ₹{profile.total_spent.toLocaleString('en-IN')}
             </p>
-            <p className="text-xs text-gray-600 mt-1">lifetime</p>
+            <p className="text-[10px] text-gray-500 mt-0.5">Tracked at register</p>
           </div>
 
-          <div className="rounded-xl bg-brand-card border border-brand-border p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Star size={14} className="text-gold" />
-              <span className="text-xs text-gray-400 font-medium">Hours Earned</span>
+          <div className="rounded-xl glass-card border border-white/10 p-4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Star size={14} className="text-neon-green" />
+              <span className="text-xs text-gray-400 font-medium">Lifetime Rewards</span>
             </div>
-            <p className="text-2xl font-black text-white">
-              {Math.floor(profile.total_spent / MILESTONE)}
+            <p className="text-xl font-black text-white font-mono">
+              {Math.floor(profile.total_spent / MILESTONE)} hrs
             </p>
-            <p className="text-xs text-gray-600 mt-1">total earned</p>
+            <p className="text-[10px] text-gray-500 mt-0.5">Total hours earned</p>
           </div>
         </div>
 
-        {/* How it works */}
-        <div className="rounded-xl bg-brand-card border border-brand-border p-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+        {/* How It Works Accordion-style Box */}
+        <div className="rounded-xl glass-card border border-white/10 p-4">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2.5">
             How Rewards Work
           </p>
           <div className="space-y-2">
             {[
-              'Every ₹1,000 you spend = 1 Free Hour',
-              'Valid on any table or PlayStation console',
-              'Free hours never expire',
-              'Show your balance to counter staff to redeem',
+              'Every ₹1,000 you spend earns 1 Free Gaming Hour',
+              'Valid on any PlayStation console or pool table',
+              'Free hours never expire and accumulate across sessions',
+              'Show your QR pass or provide your phone number at the counter',
             ].map((tip, i) => (
               <div key={i} className="flex items-start gap-2 text-xs text-gray-400">
-                <ChevronRight size={12} className="text-neon-green mt-0.5 flex-shrink-0" />
-                {tip}
+                <ChevronRight size={13} className="text-neon-green mt-0.5 flex-shrink-0" />
+                <span>{tip}</span>
               </div>
             ))}
           </div>

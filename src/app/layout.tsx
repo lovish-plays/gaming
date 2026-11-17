@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Underground — A Gaming Playstation',
-  description: 'Real-time gaming cafe station tracker & loyalty rewards system',
+  description: 'Live station status & loyalty rewards for Underground Gaming Lounge',
   manifest: '/manifest.webmanifest',
   icons: {
     icon: [
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#0a0a0f',
+  themeColor: '#030306',
 };
 
 export default function RootLayout({
@@ -34,8 +34,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="min-h-screen bg-brand-bg text-white antialiased">
-        {children}
+      <body className="min-h-screen bg-brand-bg text-white antialiased cyber-grid selection:bg-neon-green/30 selection:text-white relative">
+        <div className="cyber-orbs" aria-hidden="true" />
+        <div className="relative z-10">{children}</div>
       </body>
     </html>
   );

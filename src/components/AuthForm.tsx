@@ -87,17 +87,17 @@ export default function AuthForm() {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-sm bg-brand-card border border-brand-border rounded-2xl p-6 shadow-2xl">
+      <div className="w-full max-w-sm glass-card border border-white/10 rounded-2xl p-6 shadow-2xl backdrop-blur-2xl">
         {/* Tab switcher */}
-        <div className="flex gap-1 p-1 bg-brand-bg rounded-xl mb-6">
+        <div className="flex gap-1 p-1 bg-black/60 border border-white/5 rounded-xl mb-6">
           {(['login', 'signup'] as const).map((m) => (
             <button
               key={m}
               onClick={() => { setMode(m); setError(''); setSuccess(''); }}
               className={[
-                'flex-1 py-2 text-sm font-semibold rounded-lg transition-all',
+                'flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all',
                 mode === m
-                  ? 'bg-neon-green text-brand-bg shadow'
+                  ? 'bg-neon-green text-brand-bg shadow-[0_0_15px_rgba(16,185,129,0.3)]'
                   : 'text-gray-400 hover:text-white',
               ].join(' ')}
             >
