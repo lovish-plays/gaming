@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Gamepad2, LogOut, User, Shield, Menu, X, Crown } from 'lucide-react';
+import { Gamepad2, LogOut, User, Shield, Menu, X, Crown, UserPlus } from 'lucide-react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
 import { getPlayerRank } from '@/lib/ranks';
@@ -9,7 +9,7 @@ import { PlayerAvatar } from '@/lib/avatars';
 
 interface HeaderProps {
   profile: Profile | null;
-  onAuthClick: () => void;
+  onAuthClick: (mode?: 'signin' | 'signup') => void;
 }
 
 export default function Header({ profile, onAuthClick }: HeaderProps) {
@@ -100,12 +100,21 @@ export default function Header({ profile, onAuthClick }: HeaderProps) {
             )}
           </div>
         ) : (
-          <button
-            onClick={onAuthClick}
-            className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-neon-green/15 border border-neon-green/30 text-neon-green hover:bg-neon-green/25 transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)]"
-          >
-            Sign In
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onAuthClick('signin')}
+              className="text-xs font-bold px-3 py-1.5 rounded-xl text-gray-300 hover:text-white hover:bg-white/5 transition-all cursor-pointer"
+            >
+              Sign In
+            </button>
+            <button
+              onClick={() => onAuthClick('signup')}
+              className="text-xs font-bold px-3.5 py-1.5 rounded-xl bg-neon-green/15 border border-neon-green/30 text-neon-green hover:bg-neon-green/25 transition-all shadow-[0_0_15px_rgba(16,185,129,0.15)] flex items-center gap-1.5 cursor-pointer"
+            >
+              <UserPlus size={12} />
+              <span>Sign Up</span>
+            </button>
+          </div>
         )}
       </div>
     </header>

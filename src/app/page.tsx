@@ -18,8 +18,14 @@ import { Gamepad2, Shield, QrCode, ArrowRight, Sparkles } from 'lucide-react';
 export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [showAuth, setShowAuth] = useState(false);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
 
   const supabase = createClient();
+
+  const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthMode(mode);
+    setShowAuth(true);
+  };
 
   // Load session and profile on mount safely without blocking page render
   useEffect(() => {
@@ -75,12 +81,17 @@ export default function HomePage() {
   }, [supabase]);
 
   if (showAuth) {
-    return <AuthForm onClose={() => setShowAuth(false)} />;
+    return (
+      <AuthForm
+        onClose={() => setShowAuth(false)}
+        initialMode={authMode}
+      />
+    );
   }
 
   return (
     <div className="min-h-screen bg-transparent text-white">
-      <Header profile={profile} onAuthClick={() => setShowAuth(true)} />
+      <Header profile={profile} onAuthClick={handleOpenAuth} />
 
       <main className="max-w-3xl mx-auto px-4 py-4 sm:py-6">
         {/* ======================================================== */}
@@ -111,8 +122,8 @@ export default function HomePage() {
         {/* 5. INTERACTIVE COMMUNITY: LIVE POLL & LOUNGE LIVE CHAT   */}
         {/* ======================================================== */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 items-stretch">
-          <CommunityPoll profile={profile} onAuthClick={() => setShowAuth(true)} />
-          <LoungeChat profile={profile} onAuthClick={() => setShowAuth(true)} />
+          <CommunityPoll profile={profile} onAuthClick={() => handleOpenAuth('signin')} />
+          <LoungeChat profile={profile} onAuthClick={() => handleOpenAuth('signin')} />
         </div>
 
         {/* ======================================================== */}
@@ -146,12 +157,18 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <button
-                  onClick={() => setShowAuth(true)}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gold text-brand-bg text-xs font-black uppercase tracking-wider hover:bg-gold-dim active:scale-95 transition-all shadow-[0_0_20px_rgba(245,158,11,0.3)] cursor-pointer"
+                  onClick={() => handleOpenAuth('signup')}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-neon-green text-black text-xs font-black uppercase tracking-wider hover:bg-neon-green/90 active:scale-95 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] cursor-pointer"
                 >
                   <Sparkles size={14} />
-                  <span>Sign In or Claim Free Pass</span>
+                  <span>Claim Free VIP Pass (Sign Up)</span>
                   <ArrowRight size={14} />
+                </button>
+                <button
+                  onClick={() => handleOpenAuth('signin')}
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white text-xs font-bold uppercase tracking-wider hover:bg-white/10 active:scale-95 transition-all cursor-pointer"
+                >
+                  <span>Sign In</span>
                 </button>
               </div>
             </div>

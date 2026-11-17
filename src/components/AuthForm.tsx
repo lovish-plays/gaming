@@ -2,6 +2,12 @@
 
 import AuthSection from '@/components/AuthSection';
 
-export default function AuthForm({ onClose }: { onClose?: () => void }) {
-  return <AuthSection onClose={onClose} />;
+export default function AuthForm({
+  onClose,
+  initialMode = 'signin',
+}: {
+  onClose?: () => void;
+  initialMode?: 'signin' | 'signup';
+}) {
+  return <AuthSection onClose={onClose} initialMode={initialMode} />;
 }

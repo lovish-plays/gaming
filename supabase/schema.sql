@@ -467,23 +467,28 @@ SET search_path = public
 AS $$
 DECLARE
   v_name TEXT;
+  v_phone TEXT;
 BEGIN
   v_name := COALESCE(
     NULLIF(TRIM(NEW.raw_user_meta_data->>'full_name'), ''),
     split_part(NEW.email, '@', 1),
     'Gamer'
   );
+  v_phone := NULLIF(TRIM(NEW.raw_user_meta_data->>'phone'), '');
 
-  INSERT INTO public.profiles (id, email, full_name, role, avatar_id)
+  INSERT INTO public.profiles (id, email, full_name, phone, role, avatar_id)
   VALUES (
     NEW.id,
     LOWER(TRIM(NEW.email)),
     v_name,
+    v_phone,
     'CUSTOMER',
     'ps_controller'
   )
   ON CONFLICT (id) DO UPDATE SET
-    email = EXCLUDED.email;
+    email = EXCLUDED.email,
+    full_name = COALESCE(NULLIF(EXCLUDED.full_name, 'Gamer'), public.profiles.full_name),
+    phone = COALESCE(public.profiles.phone, EXCLUDED.phone);
 
   RETURN NEW;
 END;
@@ -603,6 +608,54 @@ END;
 $$;
 
 GRANT EXECUTE ON FUNCTION public.link_phone_to_profile(TEXT, TEXT) TO authenticated;
+
+-- Function: check_user_exists
+-- Fast pre-check for Sign Up to reject already-registered emails or phones
+DROP FUNCTION IF EXISTS public.check_user_exists(TEXT, TEXT);
+CREATE OR REPLACE FUNCTION public.check_user_exists(
+  p_email TEXT,
+  p_phone TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_clean_email TEXT;
+  v_clean_phone TEXT;
+  v_email_exists BOOLEAN := FALSE;
+  v_phone_exists BOOLEAN := FALSE;
+BEGIN
+  v_clean_email := LOWER(TRIM(COALESCE(p_email, '')));
+  
+  IF v_clean_email <> '' THEN
+    SELECT EXISTS (
+      SELECT 1 FROM public.profiles WHERE LOWER(email) = v_clean_email
+    ) INTO v_email_exists;
+  END IF;
+
+  IF p_phone IS NOT NULL AND p_phone <> '' THEN
+    v_clean_phone := REGEXP_REPLACE(p_phone, '[^0-9]', '', 'g');
+    IF LENGTH(v_clean_phone) > 10 AND LEFT(v_clean_phone, 2) = '91' THEN
+      v_clean_phone := RIGHT(v_clean_phone, 10);
+    END IF;
+    
+    IF v_clean_phone ~ '^[0-9]{10}$' THEN
+      SELECT EXISTS (
+        SELECT 1 FROM public.profiles WHERE phone = v_clean_phone
+      ) INTO v_phone_exists;
+    END IF;
+  END IF;
+
+  RETURN jsonb_build_object(
+    'email_exists', v_email_exists,
+    'phone_exists', v_phone_exists
+  );
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.check_user_exists(TEXT, TEXT) TO anon, authenticated;
 
 -- ============================================================
 -- 7. COMMUNITY CHAT & LIVE COMMUNITY POLLS
