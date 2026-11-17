@@ -4,12 +4,11 @@ import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
 import Header from '@/components/Header';
-import ParallaxHero from '@/components/ParallaxHero';
 import LiveStations from '@/components/LiveStations';
 import CustomerWallet from '@/components/CustomerWallet';
 import AdminTerminal from '@/components/AdminTerminal';
 import AuthForm from '@/components/AuthForm';
-import { Gamepad2, Shield, QrCode, ArrowRight } from 'lucide-react';
+import { Gamepad2, Shield, QrCode, ArrowRight, Sparkles, ChevronDown } from 'lucide-react';
 
 export default function HomePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -66,12 +65,12 @@ export default function HomePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-brand-bg flex items-center justify-center">
+      <div className="min-h-screen bg-transparent flex items-center justify-center">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-neon-green/10 border border-neon-green/30 mb-4 animate-pulse shadow-[0_0_25px_rgba(16,185,129,0.2)]">
             <Gamepad2 size={32} className="text-neon-green" />
           </div>
-          <p className="text-xs uppercase tracking-widest text-gray-500 font-mono">
+          <p className="text-xs uppercase tracking-widest text-gray-400 font-mono">
             Loading Underground Lounge…
           </p>
         </div>
@@ -84,25 +83,64 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg text-white">
+    <div className="min-h-screen bg-transparent text-white">
       <Header profile={profile} onAuthClick={() => setShowAuth(true)} />
 
-      <main className="max-w-2xl mx-auto px-4 py-5">
+      <main className="max-w-2xl mx-auto px-4 py-4 sm:py-6">
         {/* ======================================================== */}
-        {/* 3D SCROLL-DRIVEN PARALLAX CYBERPUNK HERO                */}
+        {/* HERO TITLE & BRAND (CLEAN, NON-BOXED, SCROLLING)        */}
         {/* ======================================================== */}
-        <ParallaxHero
-          onScrollToStations={() => {
-            const el = document.getElementById('floor-status');
-            el?.scrollIntoView({ behavior: 'smooth' });
-          }}
-        />
+        <section className="pt-4 pb-8 text-center">
+          {/* Cyber Lounge Badge */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/50 border border-white/10 backdrop-blur-md mb-4 shadow-sm">
+            <Sparkles size={13} className="text-neon-green" />
+            <span className="text-[11px] font-semibold tracking-wider text-gray-300 uppercase">
+              Underground Gaming Lounge & Bar
+            </span>
+            <span className="w-1.5 h-1.5 rounded-full bg-neon-green animate-ping" />
+          </div>
+
+          {/* Primary Prominent Bold Header */}
+          <h1 className="text-4xl sm:text-6xl font-black uppercase tracking-[0.14em] sm:tracking-[0.2em] leading-tight mb-2 bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-[0_8px_24px_rgba(0,0,0,0.9)]">
+            Underground
+          </h1>
+
+          {/* Tagline Subtitle */}
+          <p className="text-xs sm:text-sm font-extrabold uppercase tracking-[0.3em] sm:tracking-[0.4em] text-neon-green drop-shadow-[0_0_16px_rgba(16,185,129,0.5)] mb-5">
+            A Gaming Playstation
+          </p>
+
+          {/* Feature Badges */}
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-xs text-gray-300 mb-6 max-w-md mx-auto">
+            <span className="px-3 py-1 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md shadow-sm">
+              🎮 2× PS5 Consoles
+            </span>
+            <span className="px-3 py-1 rounded-xl bg-black/50 border border-white/10 backdrop-blur-md shadow-sm">
+              🎱 2× Pool Tables
+            </span>
+            <span className="px-3 py-1 rounded-xl bg-black/50 border border-gold/30 text-gold backdrop-blur-md shadow-sm">
+              ⭐ ₹1,000 = 1 Free Hour
+            </span>
+          </div>
+
+          {/* Quick-Scroll to Live Floor Button */}
+          <button
+            onClick={() => {
+              const el = document.getElementById('floor-status');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-neon-green/15 hover:bg-neon-green/25 border border-neon-green/30 text-neon-green text-xs font-bold tracking-wider uppercase transition-all duration-300 hover:scale-[1.03] active:scale-95 shadow-[0_0_20px_rgba(16,185,129,0.2)] backdrop-blur-md"
+          >
+            <span>Live Floor Availability</span>
+            <ChevronDown size={14} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+          </button>
+        </section>
 
         {/* ======================================================== */}
         {/* LOGGED IN USER QUICK BANNER                             */}
         {/* ======================================================== */}
         {profile && (
-          <div className="mb-6 rounded-2xl glass-card border border-white/10 p-4 flex items-center justify-between">
+          <div className="mb-6 rounded-2xl glass-card border border-white/10 p-4 flex items-center justify-between shadow-lg">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl bg-neon-green/15 border border-neon-green/30 flex items-center justify-center text-neon-green font-bold">
                 {profile.full_name.charAt(0).toUpperCase()}
@@ -138,7 +176,7 @@ export default function HomePage() {
         )}
 
         {/* ======================================================== */}
-        {/* ADMIN TERMINAL (SCANNER + PHONE + BILLING + REDEEM)      */}
+        {/* ADMIN TERMINAL (CAMERA SCANNER + PHONE + ADD/REDEEM)    */}
         {/* ======================================================== */}
         {profile?.role === 'ADMIN' && <AdminTerminal />}
 
@@ -180,11 +218,11 @@ export default function HomePage() {
         )}
 
         {/* Footer */}
-        <footer className="mt-12 pb-8 text-center text-xs text-gray-600 border-t border-white/5 pt-6">
+        <footer className="mt-12 pb-8 text-center text-xs text-gray-500 border-t border-white/10 pt-6">
           <p className="font-bold text-gray-400 uppercase tracking-widest">
             Underground <span className="text-neon-green">· A Gaming Playstation</span>
           </p>
-          <p className="text-[11px] text-gray-600 mt-1">
+          <p className="text-[11px] text-gray-500 mt-1">
             Real-time Station WebSockets · Digital Member QR Pass · High-Score Lounge
           </p>
         </footer>
