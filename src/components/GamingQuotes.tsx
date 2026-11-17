@@ -103,17 +103,6 @@ export function CyclingQuoteBadge() {
 
   const current = GAMING_QUOTES[index];
 
-  const getCategoryColor = (cat: GamingQuote['category']) => {
-    switch (cat) {
-      case 'FUNNY':
-        return 'text-amber-400 bg-amber-400/10 border-amber-400/30';
-      case 'MOTIVATION':
-        return 'text-neon-green bg-neon-green/10 border-neon-green/30';
-      case 'ATTITUDE':
-        return 'text-crimson bg-crimson/10 border-crimson/30';
-    }
-  };
-
   return (
     <div className="inline-flex items-center justify-center max-w-xl mx-auto mb-4 px-2">
       <button
@@ -132,13 +121,10 @@ export function CyclingQuoteBadge() {
             transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="flex items-center gap-2 text-xs truncate"
           >
-            <span className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border flex-shrink-0 ${getCategoryColor(current.category)}`}>
-              {current.category}
-            </span>
-            <span className="text-gray-200 font-medium italic truncate max-w-[280px] sm:max-w-md">
+            <span className="text-gray-200 font-medium italic truncate max-w-[290px] sm:max-w-lg">
               &ldquo;{current.quote}&rdquo;
             </span>
-            <span className="text-gray-400 text-[10px] font-bold uppercase tracking-wider flex-shrink-0 hidden sm:inline">
+            <span className="text-neon-green text-[10px] font-bold uppercase tracking-wider flex-shrink-0 hidden sm:inline">
               — {current.source}
             </span>
           </motion.div>
