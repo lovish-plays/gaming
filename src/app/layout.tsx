@@ -4,8 +4,16 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Underground — A Gaming Playstation',
   description: 'Real-time gaming cafe station tracker & loyalty rewards system',
-  manifest: '/manifest.json',
-  icons: { icon: '/favicon.ico' },
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: '32x32' },
+    ],
+    apple: [
+      { url: '/apple-icon', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   openGraph: {
     title: 'Underground — A Gaming Playstation',
     description: 'Your underground gaming lounge experience',
