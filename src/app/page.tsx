@@ -58,6 +58,7 @@ export default function HomePage() {
         }
 
         // 2. If profile is null for an authenticated user, auto-upsert initial row
+        // NOTE: role is omitted from client payload so the database default handles initial CUSTOMER assignment
         const userEmail = user.email ? user.email.toLowerCase().trim() : null;
         const meta = user.user_metadata || {};
         const fullName =
@@ -66,12 +67,11 @@ export default function HomePage() {
           (userEmail ? userEmail.split('@')[0] : 'Gamer');
         const phone = (meta.phone as string) || null;
 
-        const initialRow = {
+        const initialPayload = {
           id: user.id,
           email: userEmail,
           full_name: fullName.trim() || 'Gamer',
           phone: phone ? phone.replace(/\D/g, '') : null,
-          role: 'CUSTOMER' as const,
           avatar_id: 'ps_controller',
           spend_progress: 0,
           total_spent: 0,
@@ -80,7 +80,7 @@ export default function HomePage() {
 
         const { data: upsertedProfile, error: upsertErr } = await supabase
           .from('profiles')
-          .upsert(initialRow, { onConflict: 'id' })
+          .upsert(initialPayload, { onConflict: 'id' })
           .select('*')
           .maybeSingle();
 
@@ -88,13 +88,19 @@ export default function HomePage() {
           console.warn('Auto-upsert profile note:', upsertErr);
           // Return safe in-memory profile so the mandatory phone link prompt is immediately presented
           return {
-            ...initialRow,
+            ...initialPayload,
+            role: 'CUSTOMER',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           } as Profile;
         }
 
-        return (upsertedProfile as Profile) || (initialRow as unknown as Profile);
+        return (upsertedProfile as Profile) || ({
+          ...initialPayload,
+          role: 'CUSTOMER',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        } as Profile);
       } catch (err) {
         console.error('fetchOrUpsertProfile error:', err);
         return null;

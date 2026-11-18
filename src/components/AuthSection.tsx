@@ -218,7 +218,6 @@ export default function AuthSection({
               email: cleanEmail,
               full_name: fullName.trim() || cleanEmail.split('@')[0] || 'Gamer',
               phone: cleanPhone && cleanPhone.length === 10 ? cleanPhone : null,
-              role: 'CUSTOMER',
               avatar_id: 'ps_controller',
             },
             { onConflict: 'id' }

@@ -85,8 +85,8 @@ export type Database = {
     Tables: {
       profiles: {
         Row: Profile;
-        Insert: Omit<Profile, 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Profile, 'id' | 'created_at'>>;
+        Insert: Omit<Profile, 'created_at' | 'updated_at' | 'role'> & { role?: UserRole };
+        Update: Partial<Omit<Profile, 'id' | 'created_at' | 'role'>>;
       };
       stations: {
         Row: Station;
