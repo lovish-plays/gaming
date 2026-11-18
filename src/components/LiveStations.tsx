@@ -498,10 +498,19 @@ export default function LiveStations({ profile }: LiveStationsProps) {
                   'min-h-[205px] sm:min-h-[225px] p-3 rounded-2xl border transition-all duration-300',
                   'focus:outline-none focus-visible:ring-2 backdrop-blur-xl cursor-pointer group',
                   isFree
-                    ? 'border-neon-green/40 shadow-[0_0_25px_rgba(16,185,129,0.18)] hover:border-neon-green hover:shadow-[0_0_30px_rgba(16,185,129,0.35)]'
-                    : 'border-crimson/40 shadow-[0_0_25px_rgba(244,63,94,0.18)] hover:border-crimson hover:shadow-[0_0_30px_rgba(244,63,94,0.35)]',
+                    ? 'border-neon-green/40 shadow-[0_0_25px_rgba(16,185,129,0.18)] hover:border-neon-green hover:shadow-[0_0_30px_rgba(16,185,129,0.35)] animate-pulse-green'
+                    : 'border-crimson/40 shadow-[0_0_25px_rgba(244,63,94,0.18)] hover:border-crimson hover:shadow-[0_0_30px_rgba(244,63,94,0.35)] animate-pulse-booked',
                 ].join(' ')}
               >
+                {/* Bottom Neon Accent Bar */}
+                <div
+                  className={[
+                    'absolute bottom-0 left-0 right-0 h-1 pointer-events-none z-10 transition-all duration-500',
+                    isFree
+                      ? 'bg-gradient-to-r from-transparent via-neon-green to-transparent opacity-80'
+                      : 'bg-gradient-to-r from-yellow-400/40 via-crimson to-yellow-400/40 opacity-90',
+                  ].join(' ')}
+                />
                 {/* 1. Station-Specific Moody Background Photograph with Hover Zoom */}
                 <div
                   className="absolute inset-0 bg-cover bg-center opacity-35 group-hover:opacity-50 transition-all duration-700 ease-out group-hover:scale-105 pointer-events-none"

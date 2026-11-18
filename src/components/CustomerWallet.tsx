@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import {
   Trophy,
@@ -49,6 +49,25 @@ export default function CustomerWallet({ initialProfile, onProfileUpdate }: Cust
   const [phoneSuccess, setPhoneSuccess] = useState<string | null>(null);
 
   const supabase = createClient();
+
+  // 3D Card Tilt for VIP Member Pass
+  const tiltX = useMotionValue(0);
+  const tiltY = useMotionValue(0);
+  const rotateX = useTransform(tiltY, [-120, 120], [6, -6]);
+  const rotateY = useTransform(tiltX, [-120, 120], [-6, 6]);
+
+  const handleCardMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    tiltX.set(e.clientX - centerX);
+    tiltY.set(e.clientY - centerY);
+  };
+
+  const handleCardMouseLeave = () => {
+    tiltX.set(0);
+    tiltY.set(0);
+  };
 
   // Keep state synced with parent prop updates
   useEffect(() => {
@@ -296,11 +315,16 @@ export default function CustomerWallet({ initialProfile, onProfileUpdate }: Cust
           <>
             {/* VIP DIGITAL MEMBER QR PASS + BALANCE CARD */}
             <motion.div
+              style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
+              onMouseMove={handleCardMouseMove}
+              onMouseLeave={handleCardMouseLeave}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="relative overflow-hidden rounded-2xl glass-card border border-gold/40 p-5 shadow-[0_0_35px_rgba(245,158,11,0.12)]"
+              className="relative overflow-hidden rounded-3xl glass-card border border-gold/40 p-5 sm:p-6 shadow-[0_0_35px_rgba(245,158,11,0.18)] transition-all duration-300 hover:shadow-[0_0_50px_rgba(245,158,11,0.3)] hover:border-gold/60"
             >
+              {/* Holographic Iridescent Foil Sweep Layer */}
+              <div className="absolute inset-0 holo-card-shine pointer-events-none opacity-40 hover:opacity-75 transition-opacity duration-700" />
               {/* Subtle Ambient Radial Glow */}
               <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-gold/10 blur-3xl pointer-events-none" />
               <div className="absolute -bottom-10 -left-10 w-44 h-44 rounded-full bg-neon-green/10 blur-3xl pointer-events-none" />

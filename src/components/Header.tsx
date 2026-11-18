@@ -33,7 +33,7 @@ export default function Header({ profile, onAuthClick }: HeaderProps) {
             <h1 className="text-base font-black tracking-wider text-white uppercase leading-none">
               Underground
             </h1>
-            <p className="text-[10px] font-bold tracking-widest text-neon-green uppercase leading-none mt-1">
+            <p className="text-[10px] font-bold tracking-widest text-neon-green uppercase leading-none mt-1 animate-neon-flicker">
               A Gaming Playstation
             </p>
           </div>

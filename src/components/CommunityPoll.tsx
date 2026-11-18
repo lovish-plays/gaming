@@ -495,12 +495,26 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${percentage}%` }}
-                        transition={{ duration: 0.6, ease: 'easeOut' }}
+                        transition={{ type: 'spring', stiffness: 85, damping: 14 }}
                         className={[
-                          'absolute inset-0 h-full pointer-events-none opacity-20',
-                          isSelected ? 'bg-neon-green' : 'bg-gray-500',
+                          'absolute inset-0 h-full pointer-events-none transition-colors duration-500',
+                          isSelected
+                            ? 'bg-gradient-to-r from-neon-green/15 via-neon-green/25 to-neon-green/35 opacity-90'
+                            : 'bg-gradient-to-r from-white/5 to-white/10 opacity-70',
                         ].join(' ')}
-                      />
+                      >
+                        {/* Leading Edge Glow */}
+                        {percentage > 0 && (
+                          <div
+                            className={[
+                              'absolute right-0 top-0 bottom-0 w-1 shadow-lg',
+                              isSelected
+                                ? 'bg-neon-green shadow-[0_0_10px_#10b981]'
+                                : 'bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.4)]',
+                            ].join(' ')}
+                          />
+                        )}
+                      </motion.div>
 
                       {/* Foreground Option Content */}
                       <div className="relative z-10 flex items-center justify-between gap-2">

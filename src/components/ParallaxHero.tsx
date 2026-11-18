@@ -119,7 +119,7 @@ export default function ParallaxHero() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.15, ease: 'easeOut' }}
-          className="text-xs sm:text-sm md:text-base font-extrabold uppercase tracking-[0.3em] sm:tracking-[0.45em] text-neon-green drop-shadow-[0_0_18px_rgba(16,185,129,0.55)] mb-5"
+          className="text-xs sm:text-sm md:text-base font-extrabold uppercase tracking-[0.3em] sm:tracking-[0.45em] text-neon-green drop-shadow-[0_0_18px_rgba(16,185,129,0.55)] mb-5 animate-neon-flicker"
         >
           A Gaming Playstation
         </motion.p>
