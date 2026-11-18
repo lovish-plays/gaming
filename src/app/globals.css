@@ -214,3 +214,123 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0;
 }
 input[type=number] { -moz-appearance: textfield; }
+
+/* ======================================================== */
+/* CONTINUOUS CYBERPUNK CHROMATIC TEXT GLITCH EFFECT        */
+/* ======================================================== */
+.cyber-glitch {
+  position: relative;
+  display: inline-block;
+  user-select: none;
+}
+
+.cyber-glitch::before,
+.cyber-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  pointer-events: none;
+}
+
+/* Emerald / Cyan RGB chromatic slice */
+.cyber-glitch::before {
+  left: 2px;
+  color: #10b981;
+  text-shadow: -2px 0 #10b981, 0 0 10px rgba(16, 185, 129, 0.7);
+  animation: glitch-anim-1 2.4s infinite linear alternate-reverse;
+  opacity: 0.85;
+}
+
+/* Crimson / Magenta RGB chromatic slice */
+.cyber-glitch::after {
+  left: -2px;
+  color: #f43f5e;
+  text-shadow: 2px 0 #f43f5e, 0 0 10px rgba(244, 63, 94, 0.7);
+  animation: glitch-anim-2 3.1s infinite linear alternate-reverse;
+  opacity: 0.85;
+}
+
+@keyframes glitch-anim-1 {
+  0% {
+    clip-path: inset(20% 0 65% 0);
+    transform: skew(0.4deg) translate(-1px, 0);
+  }
+  15% {
+    clip-path: inset(88% 0 2% 0);
+    transform: skew(-0.6deg) translate(2px, -1px);
+  }
+  30% {
+    clip-path: inset(12% 0 45% 0);
+    transform: skew(0.3deg) translate(-1px, 1px);
+  }
+  45% {
+    clip-path: inset(62% 0 18% 0);
+    transform: skew(-0.4deg) translate(1px, -1px);
+  }
+  60% {
+    clip-path: inset(35% 0 35% 0);
+    transform: skew(0.8deg) translate(-2px, 0);
+  }
+  75% {
+    clip-path: inset(78% 0 5% 0);
+    transform: skew(-0.2deg) translate(1px, 1px);
+  }
+  90% {
+    clip-path: inset(5% 0 80% 0);
+    transform: skew(0.5deg) translate(-1px, -1px);
+  }
+  100% {
+    clip-path: inset(48% 0 25% 0);
+    transform: skew(-0.3deg) translate(0, 0);
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0% {
+    clip-path: inset(45% 0 30% 0);
+    transform: skew(-0.5deg) translate(1px, 0);
+  }
+  18% {
+    clip-path: inset(8% 0 75% 0);
+    transform: skew(0.4deg) translate(-2px, 1px);
+  }
+  35% {
+    clip-path: inset(72% 0 10% 0);
+    transform: skew(-0.3deg) translate(1px, -1px);
+  }
+  50% {
+    clip-path: inset(28% 0 42% 0);
+    transform: skew(0.6deg) translate(-1px, 1px);
+  }
+  68% {
+    clip-path: inset(85% 0 3% 0);
+    transform: skew(-0.5deg) translate(2px, 0);
+  }
+  82% {
+    clip-path: inset(15% 0 60% 0);
+    transform: skew(0.3deg) translate(-1px, -1px);
+  }
+  100% {
+    clip-path: inset(58% 0 20% 0);
+    transform: skew(-0.2deg) translate(0, 0);
+  }
+}
+
+/* Subtle periodic twitch on main text */
+@keyframes glitch-twitch {
+  0%, 100% { transform: none; }
+  92% { transform: none; }
+  93% { transform: skewX(-1.5deg) scale(1.008) translate(-1px, 0); }
+  94% { transform: skewX(1.5deg) scale(0.995) translate(1px, -1px); }
+  95% { transform: none; }
+  97% { transform: skewY(0.6deg) translate(-1px, 1px); }
+  98% { transform: none; }
+}
+
+.animate-glitch-twitch {
+  animation: glitch-twitch 4.2s infinite ease-in-out;
+}
