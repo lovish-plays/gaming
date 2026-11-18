@@ -208,6 +208,26 @@ export default function AuthSection({
 
       if (verifyError) throw verifyError;
 
+      // Auto-upsert initial profile row immediately upon OTP verification to guarantee existence
+      if (authData?.user) {
+        try {
+          const cleanPhone = phone ? getCleanPhone(phone) : null;
+          await supabase.from('profiles').upsert(
+            {
+              id: authData.user.id,
+              email: cleanEmail,
+              full_name: fullName.trim() || cleanEmail.split('@')[0] || 'Gamer',
+              phone: cleanPhone && cleanPhone.length === 10 ? cleanPhone : null,
+              role: 'CUSTOMER',
+              avatar_id: 'ps_controller',
+            },
+            { onConflict: 'id' }
+          );
+        } catch (upsertErr) {
+          console.warn('Initial profile upsert note:', upsertErr);
+        }
+      }
+
       // If this was a sign up, link the phone number and name permanently
       if (mode === 'signup' && phone) {
         const cleanPhone = getCleanPhone(phone);

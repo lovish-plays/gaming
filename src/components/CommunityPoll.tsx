@@ -234,7 +234,7 @@ export default function CommunityPoll({ profile, onAuthClick }: CommunityPollPro
           created_by: profile?.id || null,
         })
         .select('*')
-        .single();
+        .maybeSingle();
 
       if (insertErr) throw insertErr;
 

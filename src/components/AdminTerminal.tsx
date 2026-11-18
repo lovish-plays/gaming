@@ -135,7 +135,7 @@ export default function AdminTerminal() {
           query = query.eq('phone', cleanValue);
         }
 
-        const { data, error } = await query.single();
+        const { data, error } = await query.maybeSingle();
 
         if (error || !data) {
           setNotFound(true);
@@ -223,7 +223,7 @@ export default function AdminTerminal() {
         .from('profiles')
         .select('*')
         .eq('phone', cleanPhone)
-        .single();
+        .maybeSingle();
 
       if (error || !data) {
         setNotFound(true);

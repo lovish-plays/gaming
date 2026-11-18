@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/lib/supabase';
 import type { Profile } from '@/lib/types';
 import Header from '@/components/Header';
@@ -37,6 +37,72 @@ export default function HomePage() {
     }
   }, []);
 
+  // Safely fetch existing profile with .maybeSingle() (preventing PGRST116)
+  // or auto-upsert initial row for authenticated user before displaying wallet/phone-linking
+  const fetchOrUpsertProfile = useCallback(
+    async (user: { id: string; email?: string | null; user_metadata?: Record<string, unknown> }): Promise<Profile | null> => {
+      try {
+        // 1. Fetch profile with .maybeSingle() to cleanly avoid PGRST116
+        const { data: existingProfile, error: fetchErr } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (fetchErr) {
+          console.warn('Profile fetch warning (non-fatal):', fetchErr);
+        }
+
+        if (existingProfile) {
+          return existingProfile as Profile;
+        }
+
+        // 2. If profile is null for an authenticated user, auto-upsert initial row
+        const userEmail = user.email ? user.email.toLowerCase().trim() : null;
+        const meta = user.user_metadata || {};
+        const fullName =
+          (meta.full_name as string) ||
+          (meta.name as string) ||
+          (userEmail ? userEmail.split('@')[0] : 'Gamer');
+        const phone = (meta.phone as string) || null;
+
+        const initialRow = {
+          id: user.id,
+          email: userEmail,
+          full_name: fullName.trim() || 'Gamer',
+          phone: phone ? phone.replace(/\D/g, '') : null,
+          role: 'CUSTOMER' as const,
+          avatar_id: 'ps_controller',
+          spend_progress: 0,
+          total_spent: 0,
+          free_hours: 0,
+        };
+
+        const { data: upsertedProfile, error: upsertErr } = await supabase
+          .from('profiles')
+          .upsert(initialRow, { onConflict: 'id' })
+          .select('*')
+          .maybeSingle();
+
+        if (upsertErr) {
+          console.warn('Auto-upsert profile note:', upsertErr);
+          // Return safe in-memory profile so the mandatory phone link prompt is immediately presented
+          return {
+            ...initialRow,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          } as Profile;
+        }
+
+        return (upsertedProfile as Profile) || (initialRow as unknown as Profile);
+      } catch (err) {
+        console.error('fetchOrUpsertProfile error:', err);
+        return null;
+      }
+    },
+    [supabase]
+  );
+
   // Load session and profile on mount safely without blocking page render
   useEffect(() => {
     let mounted = true;
@@ -47,12 +113,8 @@ export default function HomePage() {
           data: { session },
         } = await supabase.auth.getSession();
         if (session?.user && mounted) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          if (mounted) setProfile(data ?? null);
+          const userProfile = await fetchOrUpsertProfile(session.user);
+          if (mounted) setProfile(userProfile);
         }
       } catch (err) {
         console.warn('Session check note:', err);
@@ -67,13 +129,9 @@ export default function HomePage() {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         try {
-          const { data } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          const userProfile = await fetchOrUpsertProfile(session.user);
           if (mounted) {
-            setProfile(data ?? null);
+            setProfile(userProfile);
             setShowAuth(false);
           }
         } catch {
@@ -88,7 +146,7 @@ export default function HomePage() {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, fetchOrUpsertProfile]);
 
   if (showAuth) {
     return (

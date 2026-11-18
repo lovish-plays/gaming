@@ -130,6 +130,14 @@ CREATE POLICY "profiles_select_own"
     OR public.is_admin()
   );
 
+DROP POLICY IF EXISTS "profiles_insert_own" ON public.profiles;
+CREATE POLICY "profiles_insert_own"
+  ON public.profiles FOR INSERT
+  WITH CHECK (
+    auth.uid() = id
+    OR public.is_admin()
+  );
+
 DROP POLICY IF EXISTS "profiles_update_admin_only" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own_or_admin" ON public.profiles;
@@ -575,10 +583,21 @@ BEGIN
     RAISE EXCEPTION 'Please enter a valid 10-digit Indian mobile number.';
   END IF;
 
-  -- Lock caller's profile row
+  -- Lock caller's profile row (or auto-create initial row if missing on fresh signup)
   SELECT * INTO v_profile FROM public.profiles WHERE id = v_uid FOR UPDATE;
   IF NOT FOUND THEN
-    RAISE EXCEPTION 'Profile not found. Please log in again.';
+    INSERT INTO public.profiles (id, email, full_name, role, avatar_id)
+    SELECT
+      u.id,
+      LOWER(TRIM(u.email)),
+      COALESCE(NULLIF(TRIM(u.raw_user_meta_data->>'full_name'), ''), split_part(u.email, '@', 1), 'Gamer'),
+      'CUSTOMER',
+      'ps_controller'
+    FROM auth.users u
+    WHERE u.id = v_uid
+    ON CONFLICT (id) DO NOTHING;
+
+    SELECT * INTO v_profile FROM public.profiles WHERE id = v_uid FOR UPDATE;
   END IF;
 
   -- Check if caller already has a phone permanently linked
