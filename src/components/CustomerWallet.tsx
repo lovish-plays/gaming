@@ -324,7 +324,7 @@ export default function CustomerWallet({ initialProfile, onProfileUpdate }: Cust
                 <div className="flex flex-col items-center flex-shrink-0">
                   <div className="relative p-2.5 bg-white rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.35)] border-2 border-gold/50">
                     <QRCodeSVG
-                      value={profile.id}
+                      value={`UGPASS:${profile.id}`}
                       size={120}
                       level="H"
                       includeMargin={false}

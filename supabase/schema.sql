@@ -695,7 +695,7 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS sender_tier TEXT DEFAULT 'Rookie';
 ALTER TABLE public.chat_messages ADD COLUMN IF NOT EXISTS sender_avatar TEXT DEFAULT 'ps_controller';
 
--- Stamp sender_tier, sender_avatar & verify sender_role before message insert
+-- Stamp sender_tier, sender_avatar & enforce true sender_role/sender_name before message insert
 CREATE OR REPLACE FUNCTION public.set_chat_sender_tier()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -706,14 +706,18 @@ DECLARE
   v_role   TEXT;
   v_spent  INT;
   v_avatar TEXT;
+  v_name   TEXT;
 BEGIN
-  SELECT role, total_spent, avatar_id INTO v_role, v_spent, v_avatar
+  SELECT role, total_spent, avatar_id, full_name
+    INTO v_role, v_spent, v_avatar, v_name
     FROM public.profiles WHERE id = NEW.user_id;
 
+  -- Strictly stamp author profile values to prevent sender impersonation or role spoofing
+  NEW.sender_name   := COALESCE(NULLIF(TRIM(v_name), ''), NEW.sender_name, 'Gamer');
   NEW.sender_avatar := COALESCE(v_avatar, NEW.sender_avatar, 'ps_controller');
+  NEW.sender_role   := COALESCE(v_role, 'CUSTOMER');
 
   IF v_role = 'ADMIN' THEN
-    NEW.sender_role := 'ADMIN';
     NEW.sender_tier := 'Lounge Boss';
   ELSIF v_spent >= 5000 THEN
     NEW.sender_tier := 'Underground Legend';
@@ -803,7 +807,11 @@ CREATE POLICY "poll_votes_insert_own"
 DROP POLICY IF EXISTS "poll_votes_update_own" ON public.poll_votes;
 CREATE POLICY "poll_votes_update_own"
   ON public.poll_votes FOR UPDATE
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS poll_votes_unique_user_poll_idx
+  ON public.poll_votes (poll_id, user_id);
 
 -- 4. FUNCTION: get_mentionable_users
 -- Returns sanitized list of member names and avatars for autocomplete (no phone or email)

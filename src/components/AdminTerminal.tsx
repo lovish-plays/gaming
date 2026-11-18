@@ -123,16 +123,21 @@ export default function AdminTerminal() {
       setBillAmount('');
 
       try {
+        let lookupVal = cleanValue;
+        if (lookupVal.startsWith('UGPASS:')) {
+          lookupVal = lookupVal.replace('UGPASS:', '').trim();
+        }
+
         const isUuid =
           /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-            cleanValue
+            lookupVal
           );
 
         let query = supabase.from('profiles').select('*');
         if (isUuid) {
-          query = query.eq('id', cleanValue);
+          query = query.eq('id', lookupVal);
         } else {
-          query = query.eq('phone', cleanValue);
+          query = query.eq('phone', lookupVal);
         }
 
         const { data, error } = await query.maybeSingle();
@@ -280,13 +285,20 @@ export default function AdminTerminal() {
   const handleRedeemHour = async () => {
     if (!customer || processing || customer.free_hours < 1) return;
 
+    // Security confirmation: verify customer identity before deducting free hours
+    const phoneHint = customer.phone ? customer.phone.slice(-4) : '****';
+    const confirmed = window.confirm(
+      `Confirm redeeming 1 Free Hour for member:\n\nName: ${customer.full_name}\nPhone: ••••${phoneHint}\n\nPlease verify member is physically present at the counter.`
+    );
+    if (!confirmed) return;
+
     setProcessing(true);
     try {
       const { error } = await supabase.rpc('redeem_free_hour', {
         p_customer_id: customer.id,
       });
       if (error) throw error;
-      setToast({ type: 'success', text: '✅ 1 free hour redeemed successfully!' });
+      setToast({ type: 'success', text: `✅ 1 free hour redeemed for ${customer.full_name}!` });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Redemption failed';
       setToast({ type: 'error', text: msg });

@@ -24,10 +24,10 @@ export default function Leaderboard() {
         return;
       }
 
-      // 2. Direct query fallback from profiles table
+      // 2. Direct query fallback from profiles table (no raw phone queried to prevent PII exposure)
       const { data: profiles, error: pError } = await supabase
         .from('profiles')
-        .select('id, full_name, phone, total_spent, avatar_id')
+        .select('id, full_name, total_spent, avatar_id')
         .eq('role', 'CUSTOMER')
         .order('total_spent', { ascending: false })
         .limit(5);
@@ -37,8 +37,7 @@ export default function Leaderboard() {
           rank: idx + 1,
           id: p.id,
           full_name: p.full_name,
-          masked_phone:
-            p.phone && p.phone.length >= 4 ? `••••${p.phone.slice(-4)}` : '••••',
+          masked_phone: '••••',
           total_spent: p.total_spent || 0,
           free_hours_unlocked: Math.floor((p.total_spent || 0) / 1000),
           avatar_id: p.avatar_id || 'ps_controller',
