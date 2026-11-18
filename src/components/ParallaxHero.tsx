@@ -97,21 +97,21 @@ export default function ParallaxHero() {
       {/* ======================================================== */}
       <motion.div
         style={{ y: yFg }}
-        className="relative z-10 max-w-3xl mx-auto px-4"
+        className="relative z-10 max-w-3xl mx-auto px-1 sm:px-4"
       >
         {/* Dynamic Randomly Cycling Quotes Badge */}
         <div className="mb-3">
           <CyclingQuoteBadge />
         </div>
 
-        {/* Primary Brand Heading: UNDERGROUND (Responsive clamp to never cut off 'D', with continuous Cyberpunk Glitch) */}
-        <div className="w-full flex justify-center overflow-visible mb-1">
+        {/* Primary Brand Heading: UNDERGROUND (Fluid clamp guarantee: 'D' is always 100% visible, with continuous Cyberpunk Glitch) */}
+        <div className="w-full flex justify-center items-center overflow-visible mb-1 px-1">
           <motion.h1
             data-text="UNDERGROUND"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="cyber-glitch animate-glitch-twitch text-[26px] min-[360px]:text-[29px] min-[400px]:text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.02em] min-[360px]:tracking-[0.05em] sm:tracking-[0.14em] md:tracking-[0.18em] leading-tight bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-[0_8px_32px_rgba(0,0,0,0.95)] max-w-full text-center select-none"
+            className="cyber-glitch animate-glitch-continuous text-[clamp(1.5rem,6.8vw,4.5rem)] font-black uppercase tracking-[0.01em] sm:tracking-[0.06em] md:tracking-[0.12em] leading-none bg-gradient-to-b from-white via-neutral-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-[0_8px_32px_rgba(0,0,0,0.95)] max-w-full text-center select-none"
           >
             Underground
           </motion.h1>

@@ -222,6 +222,7 @@ input[type=number] { -moz-appearance: textfield; }
   position: relative;
   display: inline-block;
   user-select: none;
+  overflow: visible;
 }
 
 .cyber-glitch::before,
@@ -234,103 +235,135 @@ input[type=number] { -moz-appearance: textfield; }
   height: 100%;
   background: transparent;
   pointer-events: none;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
 }
 
-/* Emerald / Cyan RGB chromatic slice */
+/* Emerald / Cyan RGB chromatic slice (active & visible) */
 .cyber-glitch::before {
-  left: 2px;
-  color: #10b981;
-  text-shadow: -2px 0 #10b981, 0 0 10px rgba(16, 185, 129, 0.7);
-  animation: glitch-anim-1 2.4s infinite linear alternate-reverse;
-  opacity: 0.85;
-}
-
-/* Crimson / Magenta RGB chromatic slice */
-.cyber-glitch::after {
   left: -2px;
-  color: #f43f5e;
-  text-shadow: 2px 0 #f43f5e, 0 0 10px rgba(244, 63, 94, 0.7);
-  animation: glitch-anim-2 3.1s infinite linear alternate-reverse;
-  opacity: 0.85;
+  color: #10b981 !important;
+  -webkit-text-fill-color: #10b981 !important;
+  text-shadow: -2px 0 #10b981, 0 0 14px rgba(16, 185, 129, 0.9);
+  animation: glitch-slice-1 2s infinite linear alternate-reverse;
+  opacity: 0.9;
+  z-index: 2;
 }
 
-@keyframes glitch-anim-1 {
+/* Crimson / Magenta RGB chromatic slice (active & visible) */
+.cyber-glitch::after {
+  left: 2px;
+  color: #f43f5e !important;
+  -webkit-text-fill-color: #f43f5e !important;
+  text-shadow: 2px 0 #f43f5e, 0 0 14px rgba(244, 63, 94, 0.9);
+  animation: glitch-slice-2 2.3s infinite linear alternate-reverse;
+  opacity: 0.9;
+  z-index: 2;
+}
+
+@keyframes glitch-slice-1 {
   0% {
-    clip-path: inset(20% 0 65% 0);
-    transform: skew(0.4deg) translate(-1px, 0);
+    clip-path: inset(15% 0 75% 0);
+    transform: translate(-3px, 1px) skew(-2deg);
   }
-  15% {
-    clip-path: inset(88% 0 2% 0);
-    transform: skew(-0.6deg) translate(2px, -1px);
+  10% {
+    clip-path: inset(70% 0 10% 0);
+    transform: translate(2px, -1px) skew(1deg);
+  }
+  20% {
+    clip-path: inset(40% 0 45% 0);
+    transform: translate(-1px, 2px) skew(0deg);
   }
   30% {
-    clip-path: inset(12% 0 45% 0);
-    transform: skew(0.3deg) translate(-1px, 1px);
+    clip-path: inset(85% 0 3% 0);
+    transform: translate(3px, 0) skew(-1.5deg);
   }
-  45% {
-    clip-path: inset(62% 0 18% 0);
-    transform: skew(-0.4deg) translate(1px, -1px);
-  }
-  60% {
-    clip-path: inset(35% 0 35% 0);
-    transform: skew(0.8deg) translate(-2px, 0);
-  }
-  75% {
-    clip-path: inset(78% 0 5% 0);
-    transform: skew(-0.2deg) translate(1px, 1px);
-  }
-  90% {
-    clip-path: inset(5% 0 80% 0);
-    transform: skew(0.5deg) translate(-1px, -1px);
-  }
-  100% {
-    clip-path: inset(48% 0 25% 0);
-    transform: skew(-0.3deg) translate(0, 0);
-  }
-}
-
-@keyframes glitch-anim-2 {
-  0% {
-    clip-path: inset(45% 0 30% 0);
-    transform: skew(-0.5deg) translate(1px, 0);
-  }
-  18% {
-    clip-path: inset(8% 0 75% 0);
-    transform: skew(0.4deg) translate(-2px, 1px);
-  }
-  35% {
-    clip-path: inset(72% 0 10% 0);
-    transform: skew(-0.3deg) translate(1px, -1px);
+  40% {
+    clip-path: inset(10% 0 80% 0);
+    transform: translate(-2px, -1px) skew(2deg);
   }
   50% {
-    clip-path: inset(28% 0 42% 0);
-    transform: skew(0.6deg) translate(-1px, 1px);
+    clip-path: inset(55% 0 25% 0);
+    transform: translate(2px, 1px) skew(-0.5deg);
   }
-  68% {
-    clip-path: inset(85% 0 3% 0);
-    transform: skew(-0.5deg) translate(2px, 0);
+  60% {
+    clip-path: inset(25% 0 60% 0);
+    transform: translate(-3px, 0) skew(1.5deg);
   }
-  82% {
-    clip-path: inset(15% 0 60% 0);
-    transform: skew(0.3deg) translate(-1px, -1px);
+  70% {
+    clip-path: inset(90% 0 1% 0);
+    transform: translate(1px, -2px) skew(-1deg);
+  }
+  80% {
+    clip-path: inset(30% 0 50% 0);
+    transform: translate(-1px, 1px) skew(0.5deg);
+  }
+  90% {
+    clip-path: inset(65% 0 15% 0);
+    transform: translate(2px, -1px) skew(-2deg);
   }
   100% {
-    clip-path: inset(58% 0 20% 0);
-    transform: skew(-0.2deg) translate(0, 0);
+    clip-path: inset(5% 0 85% 0);
+    transform: translate(-2px, 2px) skew(1deg);
   }
 }
 
-/* Subtle periodic twitch on main text */
-@keyframes glitch-twitch {
-  0%, 100% { transform: none; }
-  92% { transform: none; }
-  93% { transform: skewX(-1.5deg) scale(1.008) translate(-1px, 0); }
-  94% { transform: skewX(1.5deg) scale(0.995) translate(1px, -1px); }
-  95% { transform: none; }
-  97% { transform: skewY(0.6deg) translate(-1px, 1px); }
-  98% { transform: none; }
+@keyframes glitch-slice-2 {
+  0% {
+    clip-path: inset(60% 0 20% 0);
+    transform: translate(3px, -1px) skew(2deg);
+  }
+  12% {
+    clip-path: inset(20% 0 65% 0);
+    transform: translate(-2px, 1px) skew(-1deg);
+  }
+  25% {
+    clip-path: inset(80% 0 5% 0);
+    transform: translate(2px, 0) skew(1.5deg);
+  }
+  38% {
+    clip-path: inset(35% 0 45% 0);
+    transform: translate(-1px, -2px) skew(-2deg);
+  }
+  50% {
+    clip-path: inset(5% 0 80% 0);
+    transform: translate(3px, 1px) skew(0.5deg);
+  }
+  62% {
+    clip-path: inset(75% 0 12% 0);
+    transform: translate(-2px, 0) skew(-1.5deg);
+  }
+  75% {
+    clip-path: inset(15% 0 70% 0);
+    transform: translate(1px, 2px) skew(1deg);
+  }
+  88% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translate(-3px, -1px) skew(-0.5deg);
+  }
+  100% {
+    clip-path: inset(90% 0 2% 0);
+    transform: translate(2px, 1px) skew(2deg);
+  }
 }
 
-.animate-glitch-twitch {
-  animation: glitch-twitch 4.2s infinite ease-in-out;
+/* Continuous Cyberpunk Glitch Twitch on the main word */
+@keyframes glitch-twitch-continuous {
+  0%, 100% { transform: translate(0, 0) skew(0deg); }
+  8% { transform: translate(-2px, 1px) skew(-0.8deg); }
+  10% { transform: translate(2px, -1px) skew(0.8deg); }
+  12% { transform: translate(0, 0); }
+  35% { transform: translate(1px, -1px) skew(0.5deg); }
+  37% { transform: translate(-1px, 0) skew(-0.5deg); }
+  39% { transform: translate(0, 0); }
+  62% { transform: translate(-2px, 0) skew(1deg); }
+  64% { transform: translate(2px, 1px) skew(-1deg); }
+  66% { transform: translate(0, 0); }
+  85% { transform: translate(1px, 1px) skew(-0.4deg); }
+  87% { transform: translate(-1px, -1px) skew(0.4deg); }
+  89% { transform: translate(0, 0); }
+}
+
+.animate-glitch-continuous {
+  animation: glitch-twitch-continuous 3s infinite ease-in-out;
 }
